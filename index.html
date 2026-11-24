@@ -1069,33 +1069,33 @@
             </span>
           </div>
 
-          <!-- Row 2: BIG Hero Stat Cards (เหรียญคงเหลือ & คะแนนรวมสะสม) -->
+<!-- Row 2: EXTRA BIG Hero Stat Cards (เหรียญคงเหลือ & คะแนนรวมสะสม) -->
           <div class="grid grid-cols-2 gap-2.5">
-            <div class="bg-gradient-to-br from-amber-500/20 to-slate-800/90 border-2 border-amber-400/50 rounded-2xl px-3.5 py-2.5 shadow-inner">
-              <span class="text-[11px] font-bold text-amber-200 block">เหรียญคงเหลือ</span>
-              <div id="stu-wallet-coins" class="font-display font-bold text-2xl sm:text-3xl text-amber-300 tabular-nums leading-tight mt-0.5">
+            <div class="bg-gradient-to-br from-amber-500/25 to-slate-800 border-2 border-amber-400/70 rounded-2xl px-3.5 py-3 shadow-lg">
+              <span class="text-xs font-bold text-amber-200 block">เหรียญคงเหลือ</span>
+              <div id="stu-wallet-coins" class="font-display font-bold text-3xl sm:text-4xl text-amber-300 tabular-nums leading-tight mt-1">
                 🪙 1,000
               </div>
             </div>
-            <div class="bg-gradient-to-br from-indigo-500/25 to-slate-800/90 border-2 border-indigo-400/50 rounded-2xl px-3.5 py-2.5 shadow-inner">
-              <span class="text-[11px] font-bold text-indigo-200 block">คะแนนรวมสะสม</span>
-              <div id="stu-total-score" class="font-display font-bold text-2xl sm:text-3xl text-white tabular-nums leading-tight mt-0.5">
+            <div class="bg-gradient-to-br from-indigo-500/30 to-slate-800 border-2 border-indigo-400/70 rounded-2xl px-3.5 py-3 shadow-lg">
+              <span class="text-xs font-bold text-indigo-200 block">คะแนนรวมสะสม</span>
+              <div id="stu-total-score" class="font-display font-bold text-3xl sm:text-4xl text-white tabular-nums leading-tight mt-1">
                 ⭐ 0
               </div>
             </div>
           </div>
 
-          <!-- Row 3: BIG Current Question Stakes Banner -->
-          <div class="bg-slate-800/95 border border-slate-700 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+          <!-- Row 3: EXTRA BIG Current Question Stakes Banner -->
+          <div class="bg-emerald-950/50 border-2 border-emerald-500/50 rounded-2xl px-4 py-3 flex items-center justify-between gap-2 shadow-inner">
             <div class="flex flex-col gap-1">
-              <span id="stu-class-unit-mini" class="text-[10px] font-bold text-amber-300 tracking-wide">ม.5/2 • U5R1</span>
-              <span id="stu-q-num-badge" class="px-2.5 py-1 rounded-xl bg-indigo-500/25 border border-indigo-400/40 text-indigo-200 font-display font-bold text-xs sm:text-sm shrink-0">
+              <span id="stu-class-unit-mini" class="text-[11px] font-bold text-amber-300 tracking-wide">ม.5/2 • U5R1</span>
+              <span id="stu-q-num-badge" class="px-2.5 py-1 rounded-xl bg-indigo-500/30 border border-indigo-400/50 text-indigo-100 font-display font-bold text-sm shrink-0">
                 📖 P.1 • ข้อที่ 1 / 9
               </span>
             </div>
             <div class="text-right">
-              <span class="text-[10px] font-semibold text-slate-400 block leading-none">เดิมพันรอบนี้</span>
-              <span id="stu-q-label" class="font-display font-bold text-xl sm:text-2xl text-emerald-400 tabular-nums leading-tight">
+              <span class="text-xs font-bold text-emerald-200 block leading-none">เดิมพันข้อนี้</span>
+              <span id="stu-q-label" class="font-display font-bold text-2xl sm:text-3xl text-emerald-400 tabular-nums leading-tight">
                 200 คะแนน
               </span>
             </div>
@@ -1208,10 +1208,9 @@
   <script type="module">
     import { initializeApp, deleteApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getDatabase, ref, set, get, onValue, off, runTransaction, remove
+import {
+      getDatabase, ref, set, get, update, onValue, off, runTransaction, remove
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
     const REGION_URLS = {
       sg: "https://game-4468e-default-rtdb.asia-southeast1.firebasedatabase.app",
       us: "https://game-4468e-default-rtdb.firebaseio.com"
@@ -1322,7 +1321,7 @@
         }
       },
 
-      async syncHostTeams(roomCode, teamsMap) {
+  async syncHostTeams(roomCode, teamsMap) {
         if (!this.ready || !this.uid) return false;
         try {
           await set(ref(fbDb, `rooms/${roomCode}/teams`), teamsMap);
@@ -1331,6 +1330,25 @@
           console.error('syncHostTeams failed:', err);
           if (typeof window.showToast === 'function') {
             window.showToast(`ซิงค์ข้อมูลทีมไม่สำเร็จ (${err.code || 'ตรวจสอบ RTDB Rules'})`, 'error');
+          }
+          return false;
+        }
+      },
+      async syncHostBatch(roomCode, gameState, teamsMap = null) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          const updates = { gameState };
+          if (teamsMap) {
+            Object.keys(teamsMap).forEach((tid) => {
+              updates[`teams/${tid}`] = teamsMap[tid];
+            });
+          }
+          await update(ref(fbDb, `rooms/${roomCode}`), updates);
+          return true;
+        } catch (err) {
+          console.error('syncHostBatch failed:', err);
+          if (typeof window.showToast === 'function') {
+            window.showToast(`ซิงค์ข้อมูลไม่สำเร็จ (${err.code || 'ตรวจสอบ RTDB Rules'})`, 'error');
           }
           return false;
         }
@@ -1897,13 +1915,14 @@
       return map;
     }
 
-    function pushHostStateToFirebase(includeTeams = false) {
+function pushHostStateToFirebase(includeTeams = false) {
       autoSaveSession();
       if (!state.isLiveRoomHost || !window.FB || !window.FB.ready) return;
-      window.FB.updateGameState(state.roomCode, serializeGameState());
-      if (includeTeams) {
-        window.FB.syncHostTeams(state.roomCode, serializeTeamsMap());
-      }
+      window.FB.syncHostBatch(
+        state.roomCode,
+        serializeGameState(),
+        includeTeams ? serializeTeamsMap() : null
+      );
     }
 
     /* Auto-Save & Resume */
