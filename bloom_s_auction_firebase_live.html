@@ -1,0 +1,3033 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bloom's Auction — เกมประมูลความรู้ในห้องเรียน</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Thai + Modern Display Fonts: Anuphan & IBM Plex Sans Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Anuphan', 'IBM Plex Sans Thai', 'sans-serif'],
+            sans: ['IBM Plex Sans Thai', 'Anuphan', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'IBM Plex Sans Thai', 'Anuphan', sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      overflow-x: hidden;
+    }
+    .font-display { font-family: 'Anuphan', 'IBM Plex Sans Thai', sans-serif; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    /* Micro-interactions & Animations */
+    @keyframes popScale {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.14); }
+      100% { transform: scale(1); }
+    }
+    .animate-bid-pop { animation: popScale 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+
+    @keyframes urgentShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-3px); }
+      40% { transform: translateX(3px); }
+      60% { transform: translateX(-2px); }
+      80% { transform: translateX(2px); }
+    }
+    .animate-urgent-shake { animation: urgentShake 0.45s ease-in-out infinite; }
+
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal-pop { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @keyframes pulseGlowGold {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.35), 0 10px 25px -5px rgba(234, 179, 8, 0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0.08), 0 12px 30px -5px rgba(234, 179, 8, 0.35); }
+    }
+    .leader-glow { animation: pulseGlowGold 2.2s ease-in-out infinite; }
+
+    @keyframes flashSuccess {
+      0% { opacity: 0.45; }
+      100% { opacity: 0; }
+    }
+    .flash-green { animation: flashSuccess 0.7s ease-out forwards; }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+  </style>
+</head>
+<body class="min-h-screen pb-24 selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-[120]"></canvas>
+  <!-- Success Flash Overlay -->
+  <div id="success-flash" class="fixed inset-0 bg-emerald-400 pointer-events-none z-[115] opacity-0 hidden"></div>
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[130] flex flex-col gap-2 max-w-sm w-[calc(100vw-2rem)] pointer-events-none"></div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW A: HOST / PROJECTOR DASHBOARD (หน้าจอครูและโปรเจคเตอร์)            -->
+  <!-- ===================================================================== -->
+  <div id="host-view" class="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-5">
+
+    <!-- ------------------------------------------------------------------- -->
+    <!-- SCREEN 1: HOME & LESSON SETUP (ตั้งค่าคาบเรียนหลังบ้าน)              -->
+    <!-- ------------------------------------------------------------------- -->
+    <section id="screen-setup" class="space-y-6">
+      <!-- Top Brand Bar -->
+      <header class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-[#0F172A] text-amber-400 flex items-center justify-center shadow-md">
+            <i data-lucide="gavel" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-none">
+              Bloom's Auction
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              ตั้งค่าคาบเรียนหลังบ้าน &bull; คำนวณเหรียญอัตโนมัติ &bull; ซิงค์มือถือเด็กแบบเรียลไทม์
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
+            ขั้นตอน 1/3 : เตรียมคำถาม
+          </span>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Left Column (7 cols): Question Deck Builder -->
+        <div class="lg:col-span-7 bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="font-display font-bold text-lg text-slate-900 flex items-center gap-2">
+                <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                ชุดคำถามประจำคาบนี้ (เฉพาะครูเห็นระดับ Bloom's)
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                บนหน้าจอห้องเรียนจะแสดงเฉพาะ <b>"คะแนนเดิมพัน"</b> และป้ายโบนัสเหรียญ เพื่อไม่ให้นักเรียนสับสนคำศัพท์
+              </p>
+            </div>
+            <button
+              onclick="addQuestionRow()"
+              class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              เพิ่มข้อคำถาม
+            </button>
+          </div>
+
+          <!-- Questions List -->
+          <div id="setup-questions-list" class="space-y-3 max-h-[430px] overflow-y-auto pr-1"></div>
+
+          <!-- Auction Rules Row -->
+          <div class="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/70">
+              <label class="text-xs font-bold text-slate-600 block mb-2">เวลาประมูลต่อข้อ</label>
+              <div class="flex gap-1.5" id="setup-time-pills"></div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/70">
+              <label class="text-xs font-bold text-slate-600 block mb-2">รูปแบบการประมูลเริ่มต้น</label>
+              <div class="grid grid-cols-2 gap-1.5">
+                <button
+                  id="setup-mode-open"
+                  onclick="setSetupBidMode('open')"
+                  class="py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >เปิดราคา (Open)</button>
+                <button
+                  id="setup-mode-blind"
+                  onclick="setSetupBidMode('blind')"
+                  class="py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >ปิดราคา (Blind)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column (5 cols): Firebase Status + Smart Coin Calculator + Launch -->
+        <div class="lg:col-span-5 flex flex-col gap-5">
+
+          <!-- Firebase Live Connection Card -->
+          <div class="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span id="fb-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+                <span id="fb-status-text" class="text-xs font-bold text-slate-700 truncate">กำลังเชื่อมต่อ Firebase (game-4468e)...</span>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 shrink-0">RTDB Live</span>
+            </div>
+            <p id="fb-error-detail" class="hidden text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 leading-relaxed"></p>
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <span class="text-[11px] font-medium text-slate-500">โซนฐานข้อมูล (RTDB):</span>
+              <div class="flex items-center gap-1">
+                <button
+                  id="fb-region-sg"
+                  onclick="switchFirebaseRegion('sg')"
+                  class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-600 text-white cursor-pointer transition-all"
+                >Singapore</button>
+                <button
+                  id="fb-region-us"
+                  onclick="switchFirebaseRegion('us')"
+                  class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer transition-all"
+                >US Default</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Coin Economy Calculator Card -->
+          <div class="bg-[#0F172A] text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-slate-800 space-y-5">
+            <div class="flex items-center justify-between">
+              <h2 class="font-display font-bold text-lg flex items-center gap-2">
+                <i data-lucide="calculator" class="w-5 h-5 text-amber-400"></i>
+                คำนวณเหรียญเริ่มต้นอัตโนมัติ
+              </h2>
+              <span class="px-2.5 py-1 rounded-lg bg-amber-400/15 text-amber-300 text-[11px] font-bold">Smart Economy</span>
+            </div>
+
+            <!-- Team Count Slider -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-300 font-medium">จำนวนทีมโดยประมาณในห้องนี้</span>
+                <span id="setup-expected-teams-lbl" class="font-display font-bold text-base text-white tabular-nums">6 ทีม</span>
+              </div>
+              <input
+                id="setup-expected-teams"
+                type="range"
+                min="2"
+                max="15"
+                value="6"
+                oninput="onExpectedTeamsChange(this.value)"
+                class="w-full accent-amber-400 cursor-pointer"
+              />
+              <div class="flex justify-between text-[10px] text-slate-400">
+                <span>2 ทีม</span>
+                <span>8 ทีม</span>
+                <span>15 ทีม</span>
+              </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-3">
+                <span class="text-[11px] text-slate-400 block">จำนวนคำถามทั้งหมด</span>
+                <span id="calc-total-q" class="font-display font-bold text-xl text-white tabular-nums">5 ข้อ</span>
+              </div>
+              <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-3">
+                <span class="text-[11px] text-slate-400 block">คะแนนรวมทั้งคาบ</span>
+                <span id="calc-total-pts" class="font-display font-bold text-xl text-emerald-400 tabular-nums">1,500 แต้ม</span>
+              </div>
+            </div>
+
+            <!-- Recommended Coins Box -->
+            <div class="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-400/40 rounded-2xl p-4">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold text-amber-200">เหรียญเริ่มต้นที่แนะนำ / ทีม</span>
+                <button
+                  onclick="applyRecommendedCoins()"
+                  class="text-[11px] font-bold text-amber-300 hover:text-amber-200 underline cursor-pointer"
+                >ใช้ค่าแนะนำ</button>
+              </div>
+              <div class="flex items-baseline justify-between mt-2 gap-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">🪙</span>
+                  <input
+                    id="setup-starting-coins"
+                    type="number"
+                    step="50"
+                    min="100"
+                    max="10000"
+                    value="1000"
+                    oninput="onManualCoinsChange(this.value)"
+                    class="w-32 bg-slate-900/90 border border-amber-400/50 rounded-xl px-3 py-1.5 font-display font-bold text-2xl text-amber-300 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+                <span id="calc-rec-hint" class="text-xs text-slate-300 text-right leading-snug">
+                  แนะนำ <b class="text-amber-300 tabular-nums">1,000</b> เหรียญ
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed">
+                คำนวณสมดุลให้ทุกทีมแข่งประมูลได้สนุกตลอดคาบโดยไม่ถังแตกไวเกินไป (ปรับแก้ตัวเลขเองได้)
+              </p>
+            </div>
+
+            <!-- Launch Lobby CTA -->
+            <button
+              onclick="createRoomAndOpenLobby()"
+              class="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-400 hover:to-violet-500 active:scale-[0.98] text-white font-display font-bold text-lg shadow-lg shadow-indigo-900/40 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+            >
+              <i data-lucide="rocket" class="w-5 h-5"></i>
+              สร้างห้องและเปิดรับทีมเข้าแข่ง
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------- -->
+    <!-- SCREEN 2: LOBBY (ห้องรอเข้าร่วม + QR Code จริง)                     -->
+    <!-- ------------------------------------------------------------------- -->
+    <section id="screen-lobby" class="hidden space-y-6">
+      <!-- Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <button
+          onclick="goToScreen('setup')"
+          class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+        >
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          กลับไปแก้ชุดคำถาม
+        </button>
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+            ขั้นตอน 2/3 : รอนักเรียนเข้าร่วม
+          </span>
+          <button
+            onclick="simulateBotJoinTeam()"
+            class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <i data-lucide="user-plus" class="w-4 h-4 text-amber-400"></i>
+            + จำลองทีมเข้าห้อง
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Room Code + QR Code Banner -->
+      <div class="bg-[#0F172A] text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-indigo-500/15 blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+          <!-- Left: QR + Room Code -->
+          <div class="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+            <div class="bg-white p-3 rounded-2xl shadow-lg shrink-0 flex flex-col items-center">
+              <img
+                id="lobby-qr-img"
+                src=""
+                alt="QR Code เข้าห้องเรียน"
+                class="w-28 h-28 rounded-lg object-contain"
+                onerror="this.classList.add('hidden'); document.getElementById('lobby-qr-fallback').classList.remove('hidden');"
+              />
+              <svg id="lobby-qr-fallback" class="hidden" width="112" height="112" viewBox="0 0 29 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="29" height="29" fill="white"/>
+                <rect x="1" y="1" width="7" height="7" rx="1" stroke="#0F172A" stroke-width="1.5"/>
+                <rect x="3" y="3" width="3" height="3" fill="#0F172A"/>
+                <rect x="21" y="1" width="7" height="7" rx="1" stroke="#0F172A" stroke-width="1.5"/>
+                <rect x="23" y="3" width="3" height="3" fill="#0F172A"/>
+                <rect x="1" y="21" width="7" height="7" rx="1" stroke="#0F172A" stroke-width="1.5"/>
+                <rect x="3" y="23" width="3" height="3" fill="#0F172A"/>
+                <rect x="12" y="10" width="5" height="5" rx="1" fill="#4F46E5"/>
+                <rect x="10" y="2" width="2" height="2" fill="#0F172A"/>
+                <rect x="14" y="2" width="2" height="4" fill="#0F172A"/>
+                <rect x="19" y="10" width="2" height="4" fill="#0F172A"/>
+                <rect x="23" y="14" width="2" height="5" fill="#0F172A"/>
+                <rect x="14" y="21" width="3" height="2" fill="#0F172A"/>
+                <rect x="24" y="22" width="4" height="4" rx="0.5" fill="#0F172A"/>
+              </svg>
+              <span class="text-[10px] font-bold text-slate-600 mt-1.5">สแกนเข้าห้อง</span>
+            </div>
+
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold mb-2">
+                สแกน QR Code หรือกรอกรหัสห้องเรียนนี้
+              </span>
+              <div class="flex items-center justify-center sm:justify-start gap-3">
+                <span id="lobby-room-code-display" class="font-display font-bold text-5xl sm:text-6xl tracking-widest text-white">SKY-26</span>
+                <button
+                  onclick="copyRoomCode()"
+                  title="คัดลอกรหัสห้อง"
+                  class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 transition-all cursor-pointer"
+                >
+                  <i data-lucide="copy" class="w-5 h-5"></i>
+                </button>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-400 mt-2">
+                นักเรียนเปิดลิงก์เว็บนี้บนมือถือแล้วพิมพ์ชื่อทีมเข้าร่วมได้ทันที (รองรับ 60–70 คนพร้อมกัน)
+              </p>
+            </div>
+          </div>
+
+          <!-- Right: Live Room Stats & Start CTA -->
+          <div class="flex flex-col items-stretch sm:items-end gap-3 w-full lg:w-auto">
+            <div class="flex flex-wrap items-center justify-center lg:justify-end gap-2">
+              <div class="bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-2.5 text-center">
+                <span class="text-[11px] text-slate-400 block">คำถาม</span>
+                <span id="lobby-q-summary" class="font-display font-bold text-lg text-white tabular-nums">5 ข้อ</span>
+              </div>
+              <div class="bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-2.5 text-center">
+                <span class="text-[11px] text-slate-400 block">ทีมที่เข้าร่วม</span>
+                <span id="lobby-team-count" class="font-display font-bold text-lg text-emerald-400 tabular-nums">0 ทีม</span>
+              </div>
+              <div class="bg-slate-800/90 border border-amber-500/40 rounded-2xl px-4 py-2.5 text-center">
+                <span class="text-[11px] text-amber-300 block">เหรียญ / ทีม</span>
+                <span id="lobby-coins-per-team" class="font-display font-bold text-lg text-amber-300 tabular-nums">🪙 1,000</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center lg:justify-end gap-2">
+              <button
+                id="btn-sync-coins-lobby"
+                onclick="syncCoinsToActualTeams()"
+                class="px-3.5 py-2.5 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-xs font-bold transition-all cursor-pointer"
+              >
+                คำนวณเหรียญใหม่ตามทีมจริง
+              </button>
+              <button
+                id="btn-start-match"
+                onclick="startMatch()"
+                disabled
+                class="px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 active:scale-95 text-slate-950 font-display font-bold text-base shadow-lg flex items-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed"
+              >
+                <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                เริ่มเกมคาบนี้เลย!
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Joined Teams Grid -->
+      <div>
+        <h3 class="font-display font-bold text-base text-slate-800 mb-3 flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i>
+          รายชื่อทีมในห้องเรียน
+        </h3>
+        <div id="lobby-teams-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5"></div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------- -->
+    <!-- SCREEN 3: MAIN CLASSROOM DASHBOARD (หน้าจอโปรเจคเตอร์หลักที่คลีนๆ)   -->
+    <!-- ------------------------------------------------------------------- -->
+    <section id="screen-play" class="hidden space-y-6">
+      <!-- Top Control Bar -->
+      <header class="bg-white border border-slate-200/90 rounded-2xl px-4 py-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[#0F172A] text-amber-400 flex items-center justify-center">
+            <i data-lucide="gavel" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <span class="font-display font-bold text-base text-slate-900">Bloom's Auction</span>
+            <span id="play-room-code-badge" class="ml-2 px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
+              ห้อง SKY-26
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="btn-play-bid-mode"
+            onclick="toggleBidModeQuick()"
+            class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <i data-lucide="eye" class="w-4 h-4"></i>
+            <span>โหมดเปิดราคา</span>
+          </button>
+
+          <button
+            onclick="openCoinDropModal()"
+            class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <span>🪙</span>
+            <span>แจกเหรียญด่วน</span>
+          </button>
+
+          <button
+            onclick="toggleSound()"
+            id="btn-sound-toggle"
+            title="เปิด/ปิดเสียงเอฟเฟกต์"
+            class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer"
+          >
+            <i data-lucide="volume-2" class="w-4 h-4"></i>
+          </button>
+
+          <button
+            onclick="openForceEndModal()"
+            class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <i data-lucide="flag" class="w-4 h-4"></i>
+            <span>จบเกม</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Clean Projector Center Stage (NO Bloom's jargon shown to students!) -->
+      <div class="bg-[#0F172A] text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-800 relative overflow-hidden text-center">
+        <div id="play-accent-glow" class="absolute inset-x-0 -top-24 h-48 bg-indigo-500/20 blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-2xl mx-auto space-y-5">
+          <!-- Question Progress Pill -->
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <span id="play-q-progress" class="px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200 font-display font-bold text-sm tabular-nums">
+              คำถามข้อที่ 1 / 5
+            </span>
+            <span id="play-bonus-badge" class="hidden px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/50 text-amber-300 font-bold text-sm">
+              🪙 โบนัสเหรียญพิเศษ
+            </span>
+          </div>
+
+          <!-- Huge Stakes Display -->
+          <div>
+            <p class="text-sm sm:text-base text-slate-400 font-medium">เดิมพันคะแนนรอบนี้</p>
+            <div class="flex items-baseline justify-center gap-3 mt-1">
+              <span id="play-q-points" class="font-display font-bold text-6xl sm:text-8xl tracking-tight text-white tabular-nums">100</span>
+              <span class="font-display font-bold text-2xl sm:text-3xl text-amber-400">คะแนน</span>
+            </div>
+          </div>
+
+          <!-- Status Hint -->
+          <p id="play-stage-hint" class="text-sm text-slate-300 max-w-lg mx-auto">
+            ให้นักเรียนอ่านโจทย์บนกระดาน/สไลด์ให้เรียบร้อย เมื่อพร้อมแล้วกดปุ่มด้านล่างเพื่อเปิดการประมูล!
+          </p>
+
+          <!-- Primary Dynamic CTA Button (Auto-switches to Next Question after resolved!) -->
+          <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <button
+              id="btn-main-stage-action"
+              onclick="handleMainStageAction()"
+              class="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 font-display font-bold text-xl shadow-xl shadow-amber-900/30 flex items-center gap-3 transition-all cursor-pointer"
+            >
+              <i data-lucide="gavel" class="w-6 h-6"></i>
+              <span>เปิดประมูลรอบนี้!</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Persistent Overall Scoreboard -->
+      <div class="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-display font-bold text-base text-slate-900 flex items-center gap-2">
+            <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
+            ตารางคะแนนรวมทุกทีม (Victory Points)
+          </h3>
+          <span class="text-xs text-slate-500">เรียงตามคะแนนสะสมสูงสุด</span>
+        </div>
+        <div id="play-scoreboard-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------- -->
+    <!-- SCREEN 4: FINISH / PODIUM (สรุปอันดับผู้ชนะ + วิเคราะห์ Bloom's)      -->
+    <!-- ------------------------------------------------------------------- -->
+    <section id="screen-finish" class="hidden space-y-6">
+      <div class="bg-[#0F172A] text-white rounded-3xl p-8 text-center shadow-xl border border-slate-800 space-y-6">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          สรุปผลการแข่งขันประจำคาบ
+        </div>
+        <h2 class="font-display font-bold text-3xl sm:text-5xl text-white">🏆 อันดับผู้ชนะ Bloom's Auction</h2>
+
+        <!-- Top 3 Podium -->
+        <div id="finish-podium" class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2"></div>
+
+        <!-- Full Standings -->
+        <div id="finish-rest-list" class="max-w-2xl mx-auto space-y-2 pt-2 text-left"></div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
+          <button
+            onclick="openAnalyticsModal()"
+            class="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-display font-bold text-sm flex items-center gap-2 shadow-lg cursor-pointer"
+          >
+            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+            ดูสรุปผลวิเคราะห์ Bloom's (เฉพาะครู)
+          </button>
+          <button
+            onclick="restartToSetup()"
+            class="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-display font-bold text-sm flex items-center gap-2 border border-slate-700 cursor-pointer"
+          >
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            เริ่มคาบใหม่
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- POP-UP AUCTION OVERLAY (หน้าต่างประมูลเด้งขึ้นมาโฟกัสสายตาทั้งห้อง)   -->
+    <!-- =================================================================== -->
+    <div id="auction-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div class="w-full max-w-6xl bg-[#0F172A] text-white rounded-3xl border border-slate-700/80 shadow-2xl overflow-hidden animate-modal-pop my-auto">
+
+        <!-- Modal Header -->
+        <div class="px-5 sm:px-7 py-4 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span id="modal-q-badge" class="px-3 py-1 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 font-display font-bold text-sm">
+              ข้อที่ 1 &bull; 100 คะแนน
+            </span>
+            <span id="modal-mode-badge" class="px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold">
+              เปิดราคา
+            </span>
+            <span id="modal-blind-counter" class="hidden px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold tabular-nums">
+              ส่งราคาแล้ว 0/0 ทีม
+            </span>
+            <span id="modal-bonus-pill" class="hidden px-3 py-1 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+              🪙 โบนัสเหรียญ
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              id="btn-modal-pause"
+              onclick="togglePauseAuction()"
+              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <i data-lucide="pause" class="w-3.5 h-3.5"></i>
+              <span>หยุดเวลา</span>
+            </button>
+            <button
+              id="btn-modal-force-end"
+              onclick="forceEndAuctionTimer()"
+              class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+              <span>ปิดประมูลเลย</span>
+            </button>
+            <button
+              onclick="cancelAuctionModal()"
+              title="ยกเลิกรอบประมูลนี้ (คืนเหรียญทุกทีม)"
+              class="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 transition-colors cursor-pointer"
+            >
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Timer Bar Section -->
+        <div class="px-5 sm:px-7 pt-5 pb-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="modal-timer-label" class="text-xs font-bold text-slate-400 uppercase tracking-wider">เวลาประมูลคงเหลือ</span>
+              <span id="modal-overtime-badge" class="hidden px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-bold animate-bounce">
+                ⏱️ ต่อเวลา +5 วิ!
+              </span>
+            </div>
+            <span id="modal-timer-digits" class="font-display font-bold text-4xl sm:text-5xl text-white tabular-nums">00:20</span>
+          </div>
+          <div class="w-full h-3.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
+            <div id="modal-timer-bar" class="h-full rounded-full bg-indigo-500 transition-all duration-200" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Answering & Resolution Drawer (Appears when timer hits 00:00) -->
+        <div id="modal-resolution-banner" class="hidden mx-5 sm:mx-7 mb-5 bg-gradient-to-r from-amber-500/20 via-indigo-500/15 to-slate-800 border border-amber-400/50 rounded-2xl p-5">
+          <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 text-center lg:text-left">
+              <div id="res-winner-avatar" class="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl text-white shadow-lg shrink-0">
+                TA
+              </div>
+              <div>
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                  <span class="text-xs font-bold text-amber-300 uppercase">🏆 สิทธิ์ตอบคำถามเป็นของ</span>
+                  <span id="res-double-badge" class="hidden px-2 py-0.5 rounded-md bg-fuchsia-500 text-white text-[11px] font-bold">⚡ คูณ 2 เท่า!</span>
+                </div>
+                <h3 id="res-winner-name" class="font-display font-bold text-2xl sm:text-3xl text-white mt-0.5">Team Alpha</h3>
+                <p id="res-winner-meta" class="text-xs sm:text-sm text-slate-300 mt-0.5">
+                  ราคาประมูล 350 เหรียญ &bull; รอเลือกคำตอบ...
+                </p>
+              </div>
+            </div>
+
+            <!-- Locked Answer Badge + Host Resolution Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <div id="res-locked-answer-box" class="hidden px-4 py-2.5 rounded-2xl bg-slate-900 border border-indigo-400/60 text-center">
+                <span class="text-[10px] text-indigo-300 font-bold block">คำตอบที่ส่งมา</span>
+                <span id="res-locked-answer-letter" class="font-display font-bold text-2xl text-white">A</span>
+              </div>
+
+              <button
+                id="btn-resolve-correct"
+                onclick="resolveAnswer(true)"
+                class="px-5 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-display font-bold text-base shadow-lg flex items-center gap-2 cursor-pointer"
+              >
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                <span id="btn-resolve-correct-text">ตอบถูก (+100 แต้ม)</span>
+              </button>
+
+              <button
+                id="btn-resolve-wrong"
+                onclick="resolveAnswer(false)"
+                class="px-5 py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-400 active:scale-95 text-white font-display font-bold text-base shadow-lg flex items-center gap-2 cursor-pointer"
+              >
+                <i data-lucide="x-circle" class="w-5 h-5"></i>
+                <span>ตอบผิด (ส่งต่ออันดับถัดไป)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Bidding Leaderboard Cards -->
+        <div class="px-5 sm:px-7 pb-6">
+          <div id="modal-bidding-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 max-h-[42vh] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- UTILITY MODALS: Coin Drop / Force End / Bloom's Analytics           -->
+    <!-- =================================================================== -->
+    <!-- Quick Coin Drop Modal -->
+    <div id="coin-drop-modal" class="hidden fixed inset-0 z-[95] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-5 animate-modal-pop">
+        <div class="flex items-center justify-between">
+          <h3 class="font-display font-bold text-lg text-slate-900 flex items-center gap-2">
+            <span>🪙</span> แจกเหรียญพิเศษระหว่างคาบ
+          </h3>
+          <button onclick="closeCoinDropModal()" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1.5">แจกให้กับ</label>
+            <select id="coin-drop-target" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-800 bg-slate-50"></select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1.5">จำนวนเหรียญที่แจกเพิ่ม</label>
+            <div class="grid grid-cols-4 gap-2" id="coin-drop-pills"></div>
+          </div>
+        </div>
+
+        <button
+          onclick="executeCoinDrop()"
+          class="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-display font-bold text-base shadow-md cursor-pointer"
+        >
+          ยืนยันแจกเหรียญเลย!
+        </button>
+      </div>
+    </div>
+
+    <!-- Force End Match Modal -->
+    <div id="force-end-modal" class="hidden fixed inset-0 z-[95] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 text-center space-y-4 animate-modal-pop">
+        <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 mx-auto flex items-center justify-center">
+          <i data-lucide="flag" class="w-7 h-7"></i>
+        </div>
+        <div>
+          <h3 class="font-display font-bold text-xl text-slate-900">ต้องการจบเกมเลยหรือไม่?</h3>
+          <p class="text-xs text-slate-500 mt-1">ระบบจะสรุปคะแนนปัจจุบันและพาไปหน้าประกาศอันดับผู้ชนะทันที</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 pt-2">
+          <button onclick="closeForceEndModal()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm cursor-pointer">
+            ยกเลิก
+          </button>
+          <button onclick="confirmForceEndMatch()" class="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm cursor-pointer">
+            จบเกมเลย
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher-Only Bloom's Analytics Modal -->
+    <div id="analytics-modal" class="hidden fixed inset-0 z-[95] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-5 animate-modal-pop max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
+              <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-600"></i>
+              รายงานวิเคราะห์ผล Bloom's Taxonomy (เฉพาะครู)
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">สรุปความแม่นยำของนักเรียนทั้งห้องแยกตามระดับทักษะการคิด</p>
+          </div>
+          <button onclick="closeAnalyticsModal()" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div id="analytics-body" class="space-y-3"></div>
+        <div id="analytics-insight" class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-xs text-indigo-900 leading-relaxed"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW B: STUDENT MOBILE CONTROLLER (390px Frame / Fullscreen Mobile)   -->
+  <!-- ===================================================================== -->
+  <div id="student-view" class="hidden min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-3 py-4">
+
+    <!-- Dev/Teacher Helper Bar (Hidden automatically on real student phones) -->
+    <div id="student-helper-bar" class="mb-3 flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-1.5 shadow-sm">
+      <span class="text-xs font-bold text-slate-500">จำลองเป็นทีม:</span>
+      <select id="student-team-selector" onchange="onSelectStudentTeam(this.value)" class="text-xs font-bold text-indigo-700 bg-indigo-50 rounded-lg px-2 py-1 focus:outline-none"></select>
+    </div>
+
+    <!-- Realistic 390px Mobile Frame -->
+    <div class="w-full max-w-[390px] bg-[#0F172A] text-white rounded-[2.2rem] shadow-2xl border-[6px] border-slate-800 overflow-hidden flex flex-col min-h-[680px]">
+
+      <!-- Student Screen 1: Join Room Form -->
+      <div id="student-join-screen" class="flex-1 p-6 flex flex-col justify-center space-y-5">
+        <div class="text-center space-y-2">
+          <div class="w-14 h-14 rounded-2xl bg-amber-400 text-slate-950 mx-auto flex items-center justify-center shadow-lg">
+            <i data-lucide="gavel" class="w-8 h-8"></i>
+          </div>
+          <h2 class="font-display font-bold text-2xl text-white">Bloom's Auction</h2>
+          <p class="text-xs text-slate-400">กรอกรหัสห้องบนกระดานและตั้งชื่อทีมของคุณ</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-bold text-slate-300 block mb-1.5">รหัสห้องเรียน (Room Code)</label>
+            <input
+              id="stu-join-code"
+              type="text"
+              value="SKY-26"
+              placeholder="เช่น SKY-26"
+              class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-3 text-center font-display font-bold text-xl tracking-widest uppercase text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-300 block mb-1.5">ชื่อทีมของคุณ</label>
+            <input
+              id="stu-join-name"
+              type="text"
+              maxlength="24"
+              placeholder="เช่น แก๊งหลังห้อง, ทีมสายฟ้า"
+              class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-3 font-semibold text-base text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-300 block mb-2">เลือกสีประจำทีม</label>
+            <div id="stu-color-picker" class="flex items-center justify-between gap-2"></div>
+          </div>
+        </div>
+
+        <button
+          onclick="submitStudentJoinTeam()"
+          class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 font-display font-bold text-lg shadow-lg transition-all cursor-pointer"
+        >
+          เข้าร่วมห้องเรียนเลย!
+        </button>
+      </div>
+
+      <!-- Student Screen 2: Live Controller -->
+      <div id="student-ctrl-screen" class="hidden flex-1 flex flex-col">
+        <!-- Top Status Wallet Bar -->
+        <div class="p-4 bg-slate-900/90 border-b border-slate-800 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div id="stu-avatar" class="w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-sm text-white shrink-0">TA</div>
+              <div class="min-w-0">
+                <h2 id="stu-team-name" class="font-display font-bold text-base leading-tight truncate">Team Alpha</h2>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span id="stu-room-code-label" class="text-[11px] font-medium text-slate-400">ห้อง SKY-26</span>
+                  <span id="stu-conn-badge" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ออนไลน์
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              <div class="bg-slate-800 border border-amber-500/30 rounded-xl px-2.5 py-1.5 text-right">
+                <span class="text-[9px] text-amber-300 block leading-none">เหรียญคงเหลือ</span>
+                <span id="stu-wallet-coins" class="font-display font-bold text-sm text-amber-300 tabular-nums">🪙 1,000</span>
+              </div>
+              <div class="bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-right">
+                <span class="text-[9px] text-slate-400 block leading-none">คะแนนรวม</span>
+                <span id="stu-total-score" class="font-display font-bold text-sm text-white tabular-nums">⭐ 0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Question Info Mini Strip -->
+          <div class="flex items-center justify-between text-xs bg-slate-800/70 rounded-xl px-3 py-2">
+            <span id="stu-q-label" class="font-bold text-slate-200">ข้อที่ 1 &bull; เดิมพัน 100 คะแนน</span>
+            <span id="stu-timer-mini" class="font-display font-bold text-amber-300 tabular-nums">--:--</span>
+          </div>
+          <div id="stu-bonus-strip" class="hidden text-[11px] font-bold text-amber-300 bg-amber-400/15 border border-amber-400/30 rounded-xl px-3 py-1.5 text-center">
+            🪙 รอบนี้มีโบนัสเหรียญพิเศษ!
+          </div>
+        </div>
+
+        <!-- Contextual State Banner -->
+        <div class="p-4">
+          <div id="stu-status-banner" class="rounded-2xl p-4 text-center border transition-all bg-slate-800/80 border-slate-700">
+            <p id="stu-status-title" class="font-display font-bold text-base text-white">รอครูเปิดการประมูล...</p>
+            <p id="stu-status-sub" class="text-xs text-slate-400 mt-1">อ่านโจทย์บนกระดานแล้ววางแผนกับเพื่อนในทีมเลย!</p>
+          </div>
+        </div>
+
+        <!-- Tactile Bidding Pad -->
+        <div id="stu-bidding-pad" class="px-4 pb-5 flex-1 flex flex-col justify-between gap-4">
+          <!-- Current Bid Readout -->
+          <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 text-center">
+            <span class="text-xs font-medium text-slate-400">ราคาประมูลปัจจุบันของทีมคุณ</span>
+            <div class="flex items-baseline justify-center gap-2 mt-1">
+              <span id="stu-current-bid" class="font-display font-bold text-5xl text-white tabular-nums">0</span>
+              <span class="text-sm font-bold text-amber-400">เหรียญ</span>
+            </div>
+          </div>
+
+          <!-- Increment Buttons -->
+          <div class="space-y-2.5">
+            <div class="grid grid-cols-3 gap-2.5">
+              <button
+                id="btn-bid-10"
+                onclick="studentClickBid(10)"
+                class="py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-35 border border-slate-700 font-display font-bold text-lg text-white tabular-nums transition-all cursor-pointer disabled:cursor-not-allowed"
+              >+10</button>
+              <button
+                id="btn-bid-50"
+                onclick="studentClickBid(50)"
+                class="py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-35 border border-indigo-400/40 font-display font-bold text-lg text-white tabular-nums shadow-md transition-all cursor-pointer disabled:cursor-not-allowed"
+              >+50</button>
+              <button
+                id="btn-bid-100"
+                onclick="studentClickBid(100)"
+                class="py-4 rounded-2xl bg-violet-600 hover:bg-violet-500 active:scale-95 disabled:opacity-35 border border-violet-400/40 font-display font-bold text-lg text-white tabular-nums shadow-md transition-all cursor-pointer disabled:cursor-not-allowed"
+              >+100</button>
+            </div>
+
+            <!-- 2-Tap Confirm ALL-IN Button -->
+            <button
+              id="btn-bid-allin"
+              onclick="studentClickAllIn()"
+              class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 active:scale-95 disabled:opacity-35 text-white font-display font-bold text-base shadow-lg transition-all cursor-pointer disabled:cursor-not-allowed"
+            >
+              🔥 เทหมดหน้าตัก (ALL-IN)
+            </button>
+
+            <!-- 1-Time 2x Power-Up Pill -->
+            <button
+              id="btn-double-powerup"
+              onclick="toggleDoublePowerup()"
+              class="w-full py-3 rounded-2xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <span>⚡ การ์ดคูณ 2 เท่า (ใช้ได้ 1 ครั้ง/คาบ)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Winner's Answer Pad (Replaces Bidding Pad when this team wins!) -->
+        <div id="stu-answer-pad" class="hidden px-4 pb-6 flex-1 flex flex-col justify-center space-y-4">
+          <div class="text-center">
+            <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold mb-1">
+              🎉 ทีมคุณชนะการประมูล!
+            </span>
+            <h3 class="font-display font-bold text-xl text-white">กดเลือกคำตอบที่ถูกต้อง</h3>
+            <p class="text-xs text-slate-400 mt-0.5">ตัวเลือกที่คุณกดจะส่งขึ้นหน้าจอโปรเจคเตอร์ทันที</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3" id="stu-answer-buttons">
+            <button onclick="lockStudentAnswer('A')" data-letter="A" class="stu-ans-btn py-6 rounded-2xl bg-slate-800 hover:bg-indigo-600 active:scale-95 border-2 border-slate-700 font-display font-bold text-3xl text-white transition-all cursor-pointer">A</button>
+            <button onclick="lockStudentAnswer('B')" data-letter="B" class="stu-ans-btn py-6 rounded-2xl bg-slate-800 hover:bg-indigo-600 active:scale-95 border-2 border-slate-700 font-display font-bold text-3xl text-white transition-all cursor-pointer">B</button>
+            <button onclick="lockStudentAnswer('C')" data-letter="C" class="stu-ans-btn py-6 rounded-2xl bg-slate-800 hover:bg-indigo-600 active:scale-95 border-2 border-slate-700 font-display font-bold text-3xl text-white transition-all cursor-pointer">C</button>
+            <button onclick="lockStudentAnswer('D')" data-letter="D" class="stu-ans-btn py-6 rounded-2xl bg-slate-800 hover:bg-indigo-600 active:scale-95 border-2 border-slate-700 font-display font-bold text-3xl text-white transition-all cursor-pointer">D</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- FLOATING PROTOTYPE VIEW SWITCHER (ซ่อนอัตโนมัติบนมือถือนักเรียนจริง)     -->
+  <!-- ===================================================================== -->
+  <nav
+    id="prototype-switcher-nav"
+    aria-label="สลับมุมมองทดสอบ"
+    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] bg-[#0F172A]/95 backdrop-blur-md text-white p-1.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-1.5 max-w-[96vw] overflow-x-auto"
+  >
+    <button
+      id="nav-host-btn"
+      onclick="switchView('host')"
+      class="px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all"
+    >
+      <span>🖥️</span> จอครู (โปรเจคเตอร์)
+    </button>
+    <button
+      id="nav-student-btn"
+      onclick="switchView('student')"
+      class="px-3.5 py-2 rounded-xl hover:bg-slate-800 text-slate-300 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all"
+    >
+      <span>📱</span> มือถือนักเรียน
+    </button>
+    <div class="w-px h-5 bg-slate-700 mx-0.5"></div>
+    <button
+      onclick="simulateBotBids()"
+      class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all"
+    >
+      <span>🤖</span> จำลองบอทประมูล
+    </button>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- FIREBASE REALTIME DATABASE ENGINE (60-70 CONCURRENT USERS READY)      -->
+  <!-- ===================================================================== -->
+  <script type="module">
+    import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      update,
+      remove,
+      get,
+      onValue,
+      off,
+      runTransaction
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    const BASE_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDYv-ZEKvAsdbd_RxyxwOJs9vFi6ccKVYY",
+      authDomain: "game-4468e.firebaseapp.com",
+      projectId: "game-4468e",
+      storageBucket: "game-4468e.firebasestorage.app",
+      messagingSenderId: "920518532603",
+      appId: "1:920518532603:web:9449b9e8a4515b5b433f5e",
+      measurementId: "G-5725KH43DE"
+    };
+
+    const RTDB_URLS = {
+      sg: "https://game-4468e-default-rtdb.asia-southeast1.firebasedatabase.app",
+      us: "https://game-4468e-default-rtdb.firebaseio.com"
+    };
+
+    let fbApp = null;
+    let fbAuth = null;
+    let fbDb = null;
+    let activeRoomRef = null;
+    let activeRoomCb = null;
+
+    window.FB = {
+      ready: false,
+      connected: false,
+      uid: null,
+      region: 'sg',
+      serverTimeOffset: 0,
+
+      getServerNow() {
+        return Date.now() + (this.serverTimeOffset || 0);
+      },
+
+      async init(region = 'sg') {
+        this.region = region;
+        this.ready = false;
+        this.connected = false;
+        this.unsubscribeRoom();
+
+        if (fbApp) {
+          try { await deleteApp(fbApp); } catch (e) {}
+        }
+
+        try {
+          const config = { ...BASE_FIREBASE_CONFIG, databaseURL: RTDB_URLS[region] || RTDB_URLS.sg };
+          fbApp = initializeApp(config, `blooms-${region}-${Date.now()}`);
+          fbAuth = getAuth(fbApp);
+          fbDb = getDatabase(fbApp);
+
+          const cred = await signInAnonymously(fbAuth);
+          this.uid = cred.user.uid;
+          this.ready = true;
+
+          onValue(ref(fbDb, '.info/serverTimeOffset'), (snap) => {
+            this.serverTimeOffset = snap.val() || 0;
+          });
+
+          onValue(ref(fbDb, '.info/connected'), (snap) => {
+            this.connected = snap.val() === true;
+            if (typeof window.onFirebaseConnectionChange === 'function') {
+              window.onFirebaseConnectionChange(this.connected);
+            }
+          });
+
+          if (typeof window.onFirebaseReady === 'function') {
+            window.onFirebaseReady(this.uid);
+          }
+          return true;
+        } catch (err) {
+          console.error('Firebase init error:', err);
+          if (typeof window.onFirebaseError === 'function') {
+            window.onFirebaseError(err);
+          }
+          return false;
+        }
+      },
+
+      unsubscribeRoom() {
+        if (activeRoomRef && activeRoomCb) {
+          off(activeRoomRef, 'value', activeRoomCb);
+        }
+        activeRoomRef = null;
+        activeRoomCb = null;
+      },
+
+      subscribeRoom(roomCode, onData) {
+        if (!this.ready || !fbDb) return;
+        this.unsubscribeRoom();
+        activeRoomRef = ref(fbDb, `rooms/${roomCode}`);
+        activeRoomCb = (snap) => onData(snap.val());
+        onValue(activeRoomRef, activeRoomCb, (err) => {
+          console.error('Room listener error:', err);
+        });
+      },
+
+      async createRoom(roomCode, gameState, initialTeamsObj = {}) {
+        if (!this.ready || !this.uid) return { ok: false, error: 'ยังไม่เชื่อมต่อ Firebase' };
+        try {
+          await set(ref(fbDb, `rooms/${roomCode}`), {
+            hostUid: this.uid,
+            createdAt: this.getServerNow(),
+            gameState,
+            teams: initialTeamsObj
+          });
+          return { ok: true };
+        } catch (err) {
+          console.error('createRoom failed:', err);
+          return { ok: false, error: err.code || err.message };
+        }
+      },
+
+      async updateGameState(roomCode, partialGameState) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          await update(ref(fbDb, `rooms/${roomCode}/gameState`), partialGameState);
+          return true;
+        } catch (err) {
+          console.error('updateGameState failed:', err);
+          return false;
+        }
+      },
+
+      async syncHostTeams(roomCode, teamsMap) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          await set(ref(fbDb, `rooms/${roomCode}/teams`), teamsMap);
+          return true;
+        } catch (err) {
+          console.error('syncHostTeams failed:', err);
+          return false;
+        }
+      },
+
+      async hostAddBotTeam(roomCode, botId, botTeamData) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          await set(ref(fbDb, `rooms/${roomCode}/teams/${botId}`), botTeamData);
+          return true;
+        } catch (err) {
+          console.error('hostAddBotTeam failed:', err);
+          return false;
+        }
+      },
+
+      async hostRemoveTeam(roomCode, teamId) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          await remove(ref(fbDb, `rooms/${roomCode}/teams/${teamId}`));
+          return true;
+        } catch (err) {
+          console.error('hostRemoveTeam failed:', err);
+          return false;
+        }
+      },
+
+      async joinRoomAsStudent(roomCode, name, color, avatar) {
+        if (!this.ready || !this.uid) {
+          return { ok: false, reason: 'กำลังเชื่อมต่อเซิร์ฟเวอร์ กรุณารอสักครู่ครับ' };
+        }
+        try {
+          const gsSnap = await get(ref(fbDb, `rooms/${roomCode}/gameState`));
+          if (!gsSnap.exists()) {
+            return { ok: false, reason: `ไม่พบห้องรหัส "${roomCode}" กรุณาตรวจสอบรหัสห้องกับครูครับ` };
+          }
+          const gs = gsSnap.val();
+          if (gs.screen !== 'lobby') {
+            return { ok: false, reason: 'ห้องนี้เริ่มเกมไปแล้ว หรือยังไม่เปิดรับทีมครับ' };
+          }
+          const teamData = {
+            name,
+            color,
+            avatar,
+            score: 0,
+            wallet: gs.startingCoins || 1000,
+            currentBid: 0,
+            doubleActive: false,
+            doubleUsed: false
+          };
+          await set(ref(fbDb, `rooms/${roomCode}/teams/${this.uid}`), teamData);
+          return { ok: true, uid: this.uid, teamData };
+        } catch (err) {
+          console.error('joinRoomAsStudent failed:', err);
+          return { ok: false, reason: `เข้าห้องไม่สำเร็จ (${err.code || 'ตรวจสอบ RTDB Rules'})` };
+        }
+      },
+
+      async studentPlaceBid(roomCode, teamUid, delta, maxWallet) {
+        if (!this.ready || !this.uid) return { ok: false };
+        try {
+          const bidRef = ref(fbDb, `rooms/${roomCode}/teams/${teamUid}/currentBid`);
+          const res = await runTransaction(bidRef, (currentVal) => {
+            const cur = typeof currentVal === 'number' ? currentVal : 0;
+            const next = cur + delta;
+            if (next > maxWallet || next < cur) return;
+            return next;
+          });
+          return { ok: res.committed, newBid: res.snapshot.val() };
+        } catch (err) {
+          console.error('studentPlaceBid failed:', err);
+          return { ok: false };
+        }
+      },
+
+      async studentToggleDouble(roomCode, teamUid, active) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          await set(ref(fbDb, `rooms/${roomCode}/teams/${teamUid}/doubleActive`), !!active);
+          return true;
+        } catch (err) {
+          return false;
+        }
+      },
+
+      async studentLockAnswer(roomCode, teamUid, letter) {
+        if (!this.ready || !this.uid) return false;
+        try {
+          await set(ref(fbDb, `rooms/${roomCode}/teams/${teamUid}/lockedAnswer`), letter);
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+    };
+
+    window.FB.init('sg');
+  </script>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN APPLICATION ENGINE                                               -->
+  <!-- ===================================================================== -->
+  <script>
+    /* -----------------------------------------------------------------------
+       1. CONSTANTS & BLOOM'S TAXONOMY TIERS
+       ----------------------------------------------------------------------- */
+    const BLOOM_LEVELS = [
+      { id: 'remember',   label: 'Remembering (จำ)',       pts: 100, color: '#10B981', bg: 'bg-emerald-500/20', text: 'text-emerald-700' },
+      { id: 'understand', label: 'Understanding (เข้าใจ)',  pts: 200, color: '#0EA5E9', bg: 'bg-sky-500/20',     text: 'text-sky-700' },
+      { id: 'apply',      label: 'Applying (ประยุกต์)',     pts: 300, color: '#6366F1', bg: 'bg-indigo-500/20',  text: 'text-indigo-700' },
+      { id: 'analyze',    label: 'Analyzing (วิเคราะห์)',   pts: 400, color: '#F59E0B', bg: 'bg-amber-500/20',   text: 'text-amber-700' },
+      { id: 'evaluate',   label: 'Evaluating (ประเมินค่า)', pts: 500, color: '#F43F5E', bg: 'bg-rose-500/20',    text: 'text-rose-700' },
+    ];
+
+    const BONUS_OPTIONS = [
+      { id: 'none',       label: 'ปกติ (ไม่มีโบนัสเหรียญ)',   short: '',                     type: 'none',   amount: 0 },
+      { id: 'winner_200', label: 'คนตอบถูกได้ +200 เหรียญ',  short: 'คนตอบถูกได้ +200 เหรียญ', type: 'winner', amount: 200 },
+      { id: 'winner_300', label: 'คนตอบถูกได้ +300 เหรียญ',  short: 'คนตอบถูกได้ +300 เหรียญ', type: 'winner', amount: 300 },
+      { id: 'all_200',    label: 'จบข้อแจกทุกทีม +200 เหรียญ', short: 'จบข้อแจกทุกทีม +200 เหรียญ', type: 'all', amount: 200 },
+      { id: 'all_300',    label: 'จบข้อแจกทุกทีม +300 เหรียญ', short: 'จบข้อแจกทุกทีม +300 เหรียญ', type: 'all', amount: 300 },
+    ];
+
+    const TEAM_COLORS = ['#6366F1', '#10B981', '#F43F5E', '#F59E0B', '#0EA5E9', '#8B5CF6', '#EC4899'];
+
+    const BOT_TEAM_NAMES = [
+      { name: 'Team Alpha',     color: '#6366F1' },
+      { name: 'แก๊งหลังห้อง',    color: '#F59E0B' },
+      { name: 'Slay Queens',    color: '#F43F5E' },
+      { name: 'Butterflies',    color: '#10B981' },
+      { name: 'สายฟ้าแลบ',      color: '#0EA5E9' },
+      { name: 'มังกรไฟ',        color: '#8B5CF6' },
+    ];
+
+    /* -----------------------------------------------------------------------
+       2. SHARED APPLICATION STATE
+       ----------------------------------------------------------------------- */
+    const state = {
+      activeView: 'host',
+      screen: 'setup', // 'setup' | 'lobby' | 'play' | 'finish'
+      soundEnabled: true,
+
+      // Firebase Sync State
+      roomCode: 'SKY-26',
+      isLiveRoomHost: false,
+      isLiveStudentClient: false,
+      isStudentDeepLink: false,
+      auctionEndTime: 0,
+      prevBidsSnapshot: {},
+      rafRenderPending: false,
+
+      // Setup Settings
+      expectedTeams: 6,
+      startingCoins: 1000,
+      maxTime: 20,
+      bidMode: 'open', // 'open' | 'blind'
+      questions: [
+        { id: 1, bloomId: 'remember',   bonusId: 'none' },
+        { id: 2, bloomId: 'understand', bonusId: 'none' },
+        { id: 3, bloomId: 'apply',      bonusId: 'all_200' },
+        { id: 4, bloomId: 'analyze',    bonusId: 'winner_300' },
+        { id: 5, bloomId: 'evaluate',   bonusId: 'none' },
+      ],
+
+      // Live Round State
+      currentQuestionIdx: 0,
+      roundPhase: 'idle', // 'idle' | 'bidding' | 'paused' | 'answering' | 'resolved'
+      isAuctionModalOpen: false,
+      timeLeft: 20,
+      overtimeTriggered: false,
+      overtimeTimeout: null,
+      timerInterval: null,
+      botTimeouts: [],
+      activeBidderId: null,
+      eliminatedBidderIds: [],
+      lockedAnswer: null,
+      lastBumpedTeamId: null,
+      questionResults: [],
+
+      // Coin Drop Modal State
+      coinDropAmount: 200,
+
+      // Student Controller State
+      selectedJoinColor: TEAM_COLORS[0],
+      controlledTeamId: 't1',
+      studentJoinedCustom: false,
+      allInConfirmArmed: false,
+      allInConfirmTimer: null,
+
+      // Pre-populated teams for instant offline preview
+      teams: [
+        { id: 't1', name: 'Team Alpha',  avatar: 'TA', color: '#6366F1', wallet: 1000, currentBid: 0, score: 0, doubleActive: false, doubleUsed: false, lockedAnswer: '' },
+        { id: 't2', name: 'แก๊งหลังห้อง', avatar: 'กห', color: '#F59E0B', wallet: 1000, currentBid: 0, score: 0, doubleActive: false, doubleUsed: false, lockedAnswer: '' },
+        { id: 't3', name: 'Slay Queens', avatar: 'SQ', color: '#F43F5E', wallet: 1000, currentBid: 0, score: 0, doubleActive: false, doubleUsed: false, lockedAnswer: '' },
+        { id: 't4', name: 'Butterflies', avatar: 'BF', color: '#10B981', wallet: 1000, currentBid: 0, score: 0, doubleActive: false, doubleUsed: false, lockedAnswer: '' },
+      ],
+    };
+
+    /* -----------------------------------------------------------------------
+       3. AUDIO SYNTHESIZER (WEB AUDIO API — NO EXTERNAL FILES)
+       ----------------------------------------------------------------------- */
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, duration = 0.1, type = 'sine', gainVal = 0.08) {
+      if (!state.soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(gainVal, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playBidSound() { playTone(560, 0.08, 'triangle', 0.07); }
+    function playUrgentTick() { playTone(880, 0.06, 'square', 0.05); }
+    function playOvertimeChime() {
+      playTone(620, 0.09, 'triangle', 0.09);
+      setTimeout(() => playTone(930, 0.14, 'triangle', 0.09), 80);
+    }
+    function playBuzzerSound() {
+      playTone(220, 0.28, 'sawtooth', 0.08);
+      setTimeout(() => playTone(185, 0.35, 'sawtooth', 0.08), 140);
+    }
+    function playSuccessChime() {
+      playTone(523.25, 0.12, 'triangle', 0.09);
+      setTimeout(() => playTone(659.25, 0.12, 'triangle', 0.09), 90);
+      setTimeout(() => playTone(783.99, 0.22, 'triangle', 0.1), 180);
+    }
+    function playWrongSound() {
+      playTone(260, 0.15, 'sawtooth', 0.07);
+      setTimeout(() => playTone(190, 0.24, 'sawtooth', 0.07), 130);
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      const btn = document.getElementById('btn-sound-toggle');
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="${state.soundEnabled ? 'volume-2' : 'volume-x'}" class="w-4 h-4"></i>`;
+        lucide.createIcons();
+      }
+      showToast(state.soundEnabled ? 'เปิดเสียงเอฟเฟกต์แล้ว' : 'ปิดเสียงเอฟเฟกต์แล้ว', 'info');
+    }
+
+    /* -----------------------------------------------------------------------
+       4. HELPERS & TOAST / CONFETTI
+       ----------------------------------------------------------------------- */
+    function getBloomById(id) {
+      return BLOOM_LEVELS.find((b) => b.id === id) || BLOOM_LEVELS[0];
+    }
+    function getBonusById(id) {
+      return BONUS_OPTIONS.find((b) => b.id === id) || BONUS_OPTIONS[0];
+    }
+    function getCurrentQuestion() {
+      return state.questions[state.currentQuestionIdx] || state.questions[0];
+    }
+    function getTeam(id) {
+      return state.teams.find((t) => t.id === id);
+    }
+    function getRemainingCoins(team) {
+      return Math.max(0, team.wallet - team.currentBid);
+    }
+    function getSortedByBid() {
+      return [...state.teams].sort((a, b) => b.currentBid - a.currentBid || b.wallet - a.wallet);
+    }
+    function getSortedByScore() {
+      return [...state.teams].sort((a, b) => b.score - a.score || b.wallet - a.wallet);
+    }
+    function makeAvatar(name) {
+      const clean = (name || 'TM').trim().replace(/\s+/g, ' ');
+      const parts = clean.split(' ');
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return clean.slice(0, 2).toUpperCase();
+    }
+    function calculateRecommendedCoins(teamCount) {
+      const totalPts = state.questions.reduce((sum, q) => sum + getBloomById(q.bloomId).pts, 0);
+      const qCount = state.questions.length;
+      const base = (totalPts / Math.max(2, teamCount)) * 1.45 + qCount * 110;
+      return Math.max(300, Math.round(base / 50) * 50);
+    }
+
+    function showToast(msg, type = 'info') {
+      const box = document.getElementById('toast-container');
+      const colors = {
+        info: 'bg-slate-900 text-white border-slate-700',
+        success: 'bg-emerald-600 text-white border-emerald-500',
+        warning: 'bg-amber-500 text-slate-950 border-amber-400',
+        error: 'bg-rose-600 text-white border-rose-500',
+      };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl text-xs font-bold animate-modal-pop ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.25s';
+        setTimeout(() => el.remove(), 260);
+      }, 3000);
+    }
+
+    function triggerSuccessFlash() {
+      const el = document.getElementById('success-flash');
+      el.classList.remove('hidden', 'flash-green');
+      void el.offsetWidth;
+      el.classList.add('flash-green');
+      setTimeout(() => el.classList.add('hidden'), 720);
+    }
+
+    function fireConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const colors = ['#EAB308', '#10B981', '#6366F1', '#F43F5E', '#0EA5E9'];
+      const pieces = Array.from({ length: 90 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 120,
+        r: 4 + Math.random() * 5,
+        c: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 5,
+        vy: 3 + Math.random() * 5,
+        rot: Math.random() * 360,
+        vrot: (Math.random() - 0.5) * 10,
+      }));
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vrot;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+          ctx.restore();
+        });
+        frame++;
+        if (frame < 110) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      draw();
+    }
+
+    /* -----------------------------------------------------------------------
+       5. FIREBASE REAL-TIME SYNC BRIDGE
+       ----------------------------------------------------------------------- */
+    function scheduleRender() {
+      if (state.rafRenderPending) return;
+      state.rafRenderPending = true;
+      requestAnimationFrame(() => {
+        state.rafRenderPending = false;
+        renderAll();
+      });
+    }
+
+    function generateRoomCode() {
+      const prefixes = ['SKY', 'SUN', 'PRO', 'ACE', 'WIN', 'TOP', 'ZEN'];
+      const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const num = Math.floor(10 + Math.random() * 89);
+      return `${p}-${num}`;
+    }
+
+    function serializeGameState() {
+      return {
+        screen: state.screen,
+        startingCoins: state.startingCoins,
+        maxTime: state.maxTime,
+        bidMode: state.bidMode,
+        questions: state.questions,
+        currentQuestionIdx: state.currentQuestionIdx,
+        roundPhase: state.roundPhase,
+        isAuctionModalOpen: state.isAuctionModalOpen,
+        auctionEndTime: state.auctionEndTime || 0,
+        timeLeft: state.timeLeft,
+        overtimeTriggered: state.overtimeTriggered,
+        activeBidderId: state.activeBidderId || '',
+        eliminatedBidderIds: state.eliminatedBidderIds || [],
+        lockedAnswer: state.lockedAnswer || '',
+        questionResults: state.questionResults || []
+      };
+    }
+
+    function serializeTeamsMap() {
+      const map = {};
+      state.teams.forEach((t) => {
+        map[t.id] = {
+          name: t.name,
+          avatar: t.avatar,
+          color: t.color,
+          wallet: t.wallet,
+          currentBid: t.currentBid,
+          score: t.score,
+          doubleActive: !!t.doubleActive,
+          doubleUsed: !!t.doubleUsed,
+          lockedAnswer: t.lockedAnswer || ''
+        };
+      });
+      return map;
+    }
+
+    function pushHostStateToFirebase(includeTeams = false) {
+      if (!state.isLiveRoomHost || !window.FB || !window.FB.ready) return;
+      window.FB.updateGameState(state.roomCode, serializeGameState());
+      if (includeTeams) {
+        window.FB.syncHostTeams(state.roomCode, serializeTeamsMap());
+      }
+    }
+
+    function handleRoomSnapshot(data) {
+      if (!data) return;
+      const gs = data.gameState || {};
+      const teamsObj = data.teams || {};
+
+      const incomingTeams = Object.keys(teamsObj).map((uid) => ({
+        id: uid,
+        name: teamsObj[uid].name || 'ทีมผู้เล่น',
+        avatar: teamsObj[uid].avatar || 'TM',
+        color: teamsObj[uid].color || '#6366F1',
+        wallet: Number(teamsObj[uid].wallet ?? state.startingCoins),
+        currentBid: Number(teamsObj[uid].currentBid ?? 0),
+        score: Number(teamsObj[uid].score ?? 0),
+        doubleActive: !!teamsObj[uid].doubleActive,
+        doubleUsed: !!teamsObj[uid].doubleUsed,
+        lockedAnswer: teamsObj[uid].lockedAnswer || ''
+      }));
+
+      let anyBidIncreased = false;
+      incomingTeams.forEach((t) => {
+        const prev = state.prevBidsSnapshot[t.id] || 0;
+        if (t.currentBid > prev) {
+          state.lastBumpedTeamId = t.id;
+          anyBidIncreased = true;
+        }
+        state.prevBidsSnapshot[t.id] = t.currentBid;
+      });
+      state.teams = incomingTeams;
+
+      if (state.isLiveRoomHost) {
+        if (state.roundPhase === 'answering' && state.activeBidderId) {
+          const activeT = getTeam(state.activeBidderId);
+          if (activeT && activeT.lockedAnswer && activeT.lockedAnswer !== state.lockedAnswer) {
+            state.lockedAnswer = activeT.lockedAnswer;
+            playTone(880, 0.1, 'sine', 0.08);
+            showToast(`ทีม "${activeT.name}" ส่งคำตอบ [ ข้อ ${activeT.lockedAnswer} ] แล้ว!`, 'info');
+          }
+        }
+
+        if (anyBidIncreased && state.roundPhase === 'bidding') {
+          if (state.bidMode === 'open' && state.timeLeft > 0 && state.timeLeft <= 3) {
+            state.auctionEndTime = window.FB.getServerNow() + 5000;
+            state.timeLeft = 5;
+            state.overtimeTriggered = true;
+            playOvertimeChime();
+            showToast('⏱️ ต่อเวลา +5 วิ! มีทีมเสนอราคาช่วงโค้งสุดท้าย', 'warning');
+            pushHostStateToFirebase(false);
+            clearTimeout(state.overtimeTimeout);
+            state.overtimeTimeout = setTimeout(() => {
+              state.overtimeTriggered = false;
+              pushHostStateToFirebase(false);
+              renderTimer();
+            }, 1800);
+          } else {
+            playBidSound();
+          }
+        }
+      } else if (state.isLiveStudentClient) {
+        state.screen = gs.screen || 'lobby';
+        state.startingCoins = gs.startingCoins ?? state.startingCoins;
+        state.maxTime = gs.maxTime ?? state.maxTime;
+        state.bidMode = gs.bidMode || 'open';
+        if (Array.isArray(gs.questions) && gs.questions.length > 0) {
+          state.questions = gs.questions;
+        }
+        state.currentQuestionIdx = gs.currentQuestionIdx || 0;
+        state.roundPhase = gs.roundPhase || 'idle';
+        state.isAuctionModalOpen = !!gs.isAuctionModalOpen;
+        state.auctionEndTime = gs.auctionEndTime || 0;
+        state.overtimeTriggered = !!gs.overtimeTriggered;
+        state.activeBidderId = gs.activeBidderId || null;
+        state.eliminatedBidderIds = Array.isArray(gs.eliminatedBidderIds) ? gs.eliminatedBidderIds : [];
+
+        const activeT = state.activeBidderId ? getTeam(state.activeBidderId) : null;
+        state.lockedAnswer = (activeT && activeT.lockedAnswer) ? activeT.lockedAnswer : (gs.lockedAnswer || null);
+
+        if (state.roundPhase === 'bidding' && state.auctionEndTime > 0) {
+          startSyncedCountdownLoop();
+        } else {
+          clearInterval(state.timerInterval);
+          state.timeLeft = gs.timeLeft ?? state.maxTime;
+        }
+      }
+
+      scheduleRender();
+    }
+
+    function updateFirebaseStatusUI(connected, errorMsg = '') {
+      const dot = document.getElementById('fb-status-dot');
+      const txt = document.getElementById('fb-status-text');
+      const errBox = document.getElementById('fb-error-detail');
+      const stuBadge = document.getElementById('stu-conn-badge');
+
+      if (dot && txt) {
+        if (errorMsg) {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0';
+          txt.textContent = 'โหมดออฟไลน์ (เชื่อมต่อ Firebase ไม่สำเร็จ)';
+          if (errBox) {
+            errBox.textContent = errorMsg;
+            errBox.classList.remove('hidden');
+          }
+        } else if (connected) {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
+          txt.textContent = `เชื่อมต่อ Firebase (${window.FB.region.toUpperCase()}) พร้อมเล่นข้ามเครื่องแล้ว!`;
+          if (errBox) errBox.classList.add('hidden');
+        } else {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0';
+          txt.textContent = 'กำลังเชื่อมต่อเซิร์ฟเวอร์ Firebase...';
+          if (errBox) errBox.classList.add('hidden');
+        }
+      }
+
+      if (stuBadge) {
+        if (connected) {
+          stuBadge.className = 'inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400';
+          stuBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ออนไลน์';
+        } else {
+          stuBadge.className = 'inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 animate-pulse';
+          stuBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> กำลังต่อใหม่...';
+        }
+      }
+    }
+
+    function switchFirebaseRegion(region) {
+      document.getElementById('fb-region-sg').className = region === 'sg'
+        ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-600 text-white cursor-pointer transition-all'
+        : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer transition-all';
+      document.getElementById('fb-region-us').className = region === 'us'
+        ? 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-600 text-white cursor-pointer transition-all'
+        : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer transition-all';
+      updateFirebaseStatusUI(false);
+      window.FB.init(region);
+      showToast(`สลับโซนฐานข้อมูลเป็น ${region === 'sg' ? 'Singapore' : 'US Default'} แล้ว`, 'info');
+    }
+
+    window.onFirebaseReady = () => updateFirebaseStatusUI(window.FB.connected);
+    window.onFirebaseConnectionChange = (isConnected) => updateFirebaseStatusUI(isConnected);
+    window.onFirebaseError = (err) => {
+      const code = err?.code || '';
+      const hint = code.includes('admin-restricted') || code.includes('operation-not-allowed')
+        ? 'กรุณาเปิด Anonymous Sign-in ใน Firebase Console → Authentication → Sign-in method'
+        : `รายละเอียด: ${code || err?.message || 'ตรวจสอบโซนฐานข้อมูล Singapore / US'}`;
+      updateFirebaseStatusUI(false, hint);
+    };
+
+    /* -----------------------------------------------------------------------
+       6. SETUP & LOBBY ACTIONS
+       ----------------------------------------------------------------------- */
+    function addQuestionRow() {
+      const nextId = state.questions.length ? Math.max(...state.questions.map((q) => q.id)) + 1 : 1;
+      const nextBloom = BLOOM_LEVELS[state.questions.length % BLOOM_LEVELS.length].id;
+      state.questions.push({ id: nextId, bloomId: nextBloom, bonusId: 'none' });
+      state.startingCoins = calculateRecommendedCoins(state.expectedTeams);
+      renderSetupScreen();
+    }
+
+    function removeQuestionRow(idx) {
+      if (state.questions.length <= 1) {
+        showToast('ต้องมีอย่างน้อย 1 ข้อครับ', 'warning');
+        return;
+      }
+      state.questions.splice(idx, 1);
+      state.startingCoins = calculateRecommendedCoins(state.expectedTeams);
+      renderSetupScreen();
+    }
+
+    function updateQuestionBloom(idx, bloomId) {
+      state.questions[idx].bloomId = bloomId;
+      state.startingCoins = calculateRecommendedCoins(state.expectedTeams);
+      renderSetupScreen();
+    }
+
+    function updateQuestionBonus(idx, bonusId) {
+      state.questions[idx].bonusId = bonusId;
+      renderSetupScreen();
+    }
+
+    function setSetupTime(sec) {
+      state.maxTime = sec;
+      state.timeLeft = sec;
+      renderSetupScreen();
+    }
+
+    function setSetupBidMode(mode) {
+      state.bidMode = mode;
+      renderSetupScreen();
+    }
+
+    function onExpectedTeamsChange(val) {
+      state.expectedTeams = Number(val);
+      state.startingCoins = calculateRecommendedCoins(state.expectedTeams);
+      renderSetupScreen();
+    }
+
+    function onManualCoinsChange(val) {
+      const n = parseInt(val, 10);
+      if (!isNaN(n) && n >= 50) state.startingCoins = n;
+    }
+
+    function applyRecommendedCoins() {
+      state.startingCoins = calculateRecommendedCoins(state.expectedTeams);
+      renderSetupScreen();
+      showToast(`ตั้งค่าเหรียญเริ่มต้นเป็น ${state.startingCoins.toLocaleString()} เหรียญแล้ว`, 'info');
+    }
+
+    function toggleBidModeQuick() {
+      state.bidMode = state.bidMode === 'open' ? 'blind' : 'open';
+      showToast(state.bidMode === 'blind' ? 'เปลี่ยนเป็นโหมดปิดราคา (Blind Bid)' : 'เปลี่ยนเป็นโหมดเปิดราคา (Open Bid)', 'info');
+      pushHostStateToFirebase(false);
+      renderAll();
+    }
+
+    async function createRoomAndOpenLobby() {
+      state.roomCode = generateRoomCode();
+      state.screen = 'lobby';
+      state.roundPhase = 'idle';
+      state.prevBidsSnapshot = {};
+
+      if (window.FB && window.FB.ready) {
+        state.isLiveRoomHost = true;
+        state.isLiveStudentClient = false;
+        state.teams = [];
+        const res = await window.FB.createRoom(state.roomCode, serializeGameState(), {});
+        if (res.ok) {
+          window.FB.subscribeRoom(state.roomCode, handleRoomSnapshot);
+          showToast(`เปิดห้องออนไลน์ ${state.roomCode} แล้ว! ให้นักเรียนสแกน QR เข้าได้เลย`, 'success');
+        } else {
+          state.isLiveRoomHost = false;
+          state.teams = BOT_TEAM_NAMES.slice(0, 4).map((b, i) => ({
+            id: 't' + (i + 1),
+            name: b.name,
+            avatar: makeAvatar(b.name),
+            color: b.color,
+            wallet: state.startingCoins,
+            currentBid: 0,
+            score: 0,
+            doubleActive: false,
+            doubleUsed: false,
+            lockedAnswer: ''
+          }));
+          showToast(`เปิดโหมดทดลองในเครื่อง (${res.error || 'ตรวจสอบ RTDB Rules'})`, 'warning');
+        }
+      } else {
+        state.teams.forEach((t) => {
+          t.wallet = state.startingCoins;
+          t.currentBid = 0;
+          t.score = 0;
+          t.doubleActive = false;
+          t.doubleUsed = false;
+          t.lockedAnswer = '';
+        });
+        showToast(`สร้างห้อง ${state.roomCode} เรียบร้อย! (โหมดจำลองในเครื่อง)`, 'success');
+      }
+
+      const joinCodeEl = document.getElementById('stu-join-code');
+      if (joinCodeEl) joinCodeEl.value = state.roomCode;
+      playBidSound();
+      renderAll();
+    }
+
+    function syncCoinsToActualTeams() {
+      const rec = calculateRecommendedCoins(Math.max(2, state.teams.length));
+      state.startingCoins = rec;
+      state.teams.forEach((t) => { t.wallet = rec; });
+      pushHostStateToFirebase(true);
+      showToast(`ปรับเหรียญเริ่มต้นเป็น ${rec.toLocaleString()} เหรียญ/ทีม (คำนวณจาก ${state.teams.length} ทีมจริง)`, 'success');
+      renderAll();
+    }
+
+    function removeLobbyTeam(id) {
+      if (state.isLiveRoomHost && window.FB && window.FB.ready) {
+        window.FB.hostRemoveTeam(state.roomCode, id);
+      }
+      state.teams = state.teams.filter((t) => t.id !== id);
+      if (state.controlledTeamId === id && state.teams[0]) {
+        state.controlledTeamId = state.teams[0].id;
+      }
+      renderAll();
+    }
+
+    function simulateBotJoinTeam() {
+      const existingNames = state.teams.map((t) => t.name);
+      const available = BOT_TEAM_NAMES.filter((b) => !existingNames.includes(b.name));
+      const pick = available.length > 0
+        ? available[0]
+        : { name: `ทีมน้องใหม่ #${state.teams.length + 1}`, color: TEAM_COLORS[state.teams.length % TEAM_COLORS.length] };
+
+      const botId = 'bot_' + Date.now();
+      const botTeam = {
+        id: botId,
+        name: pick.name,
+        avatar: makeAvatar(pick.name),
+        color: pick.color,
+        wallet: state.startingCoins,
+        currentBid: 0,
+        score: 0,
+        doubleActive: false,
+        doubleUsed: false,
+        lockedAnswer: ''
+      };
+
+      if (state.isLiveRoomHost && window.FB && window.FB.ready) {
+        const { id, ...fbData } = botTeam;
+        window.FB.hostAddBotTeam(state.roomCode, botId, fbData);
+      } else {
+        state.teams.push(botTeam);
+      }
+      if (!state.controlledTeamId) state.controlledTeamId = botId;
+      playBidSound();
+      showToast(`ทีม "${pick.name}" เข้าร่วมห้องแล้ว!`, 'success');
+      renderAll();
+    }
+
+    function startMatch() {
+      if (state.teams.length < 2) {
+        showToast('ต้องมีอย่างน้อย 2 ทีมจึงจะเริ่มประมูลได้ครับ', 'warning');
+        return;
+      }
+      state.currentQuestionIdx = 0;
+      state.roundPhase = 'idle';
+      state.isAuctionModalOpen = false;
+      state.timeLeft = state.maxTime;
+      state.auctionEndTime = 0;
+      state.questionResults = [];
+      resetAllInConfirm();
+      state.teams.forEach((t) => {
+        t.wallet = state.startingCoins;
+        t.currentBid = 0;
+        t.score = 0;
+        t.doubleActive = false;
+        t.doubleUsed = false;
+        t.lockedAnswer = '';
+      });
+      if (!getTeam(state.controlledTeamId) && state.teams[0]) {
+        state.controlledTeamId = state.teams[0].id;
+      }
+      state.screen = 'play';
+      pushHostStateToFirebase(true);
+      playSuccessChime();
+      showToast('เริ่มเกมแล้ว! เตรียมเปิดประมูลข้อที่ 1 ได้เลย', 'success');
+      renderAll();
+    }
+
+    function goToScreen(target) {
+      clearInterval(state.timerInterval);
+      clearBotTimers();
+      resetAllInConfirm();
+      state.isAuctionModalOpen = false;
+      state.screen = target;
+      pushHostStateToFirebase(false);
+      renderAll();
+    }
+
+    function restartToSetup() {
+      clearInterval(state.timerInterval);
+      clearBotTimers();
+      state.currentQuestionIdx = 0;
+      state.roundPhase = 'idle';
+      state.questionResults = [];
+      state.isLiveRoomHost = false;
+      if (window.FB) window.FB.unsubscribeRoom();
+      state.screen = 'setup';
+      renderAll();
+    }
+
+    /* -----------------------------------------------------------------------
+       7. AUCTION MODAL & LIVE ROUND ENGINE
+       ----------------------------------------------------------------------- */
+    function clearBotTimers() {
+      state.botTimeouts.forEach((t) => clearTimeout(t));
+      state.botTimeouts = [];
+    }
+
+    function handleMainStageAction() {
+      if (state.roundPhase === 'resolved') {
+        goToNextQuestion();
+      } else {
+        openAuctionOverlayAndStart();
+      }
+    }
+
+    function openAuctionOverlayAndStart() {
+      state.teams.forEach((t) => {
+        t.currentBid = 0;
+        t.doubleActive = false;
+        t.lockedAnswer = '';
+      });
+      state.prevBidsSnapshot = {};
+      state.activeBidderId = null;
+      state.eliminatedBidderIds = [];
+      state.lockedAnswer = null;
+      state.overtimeTriggered = false;
+      resetAllInConfirm();
+      state.timeLeft = state.maxTime;
+      const nowMs = window.FB ? window.FB.getServerNow() : Date.now();
+      state.auctionEndTime = nowMs + state.maxTime * 1000;
+      state.roundPhase = 'bidding';
+      state.isAuctionModalOpen = true;
+
+      pushHostStateToFirebase(true);
+      playBidSound();
+      startSyncedCountdownLoop();
+      renderAll();
+    }
+
+    function cancelAuctionModal() {
+      clearInterval(state.timerInterval);
+      clearBotTimers();
+      clearTimeout(state.overtimeTimeout);
+      resetAllInConfirm();
+
+      state.teams.forEach((t) => {
+        t.currentBid = 0;
+        t.doubleActive = false;
+        t.lockedAnswer = '';
+      });
+      state.roundPhase = 'idle';
+      state.isAuctionModalOpen = false;
+      state.timeLeft = state.maxTime;
+      state.auctionEndTime = 0;
+      state.activeBidderId = null;
+      state.eliminatedBidderIds = [];
+      state.lockedAnswer = null;
+      state.overtimeTriggered = false;
+
+      pushHostStateToFirebase(true);
+      showToast('ยกเลิกรอบประมูลนี้แล้ว เหรียญถูกคืนกลับกระเป๋าทุกทีม', 'warning');
+      renderAll();
+    }
+
+    function startSyncedCountdownLoop() {
+      clearInterval(state.timerInterval);
+      let lastWholeSec = state.timeLeft;
+      state.timerInterval = setInterval(() => {
+        if (state.roundPhase !== 'bidding') return;
+        const nowMs = window.FB ? window.FB.getServerNow() : Date.now();
+        const remSec = Math.max(0, Math.ceil((state.auctionEndTime - nowMs) / 1000));
+
+        if (remSec !== lastWholeSec) {
+          lastWholeSec = remSec;
+          state.timeLeft = remSec;
+          if (remSec <= 5 && remSec > 0 && !state.isLiveStudentClient) playUrgentTick();
+          renderTimer();
+        }
+
+        if (remSec <= 0) {
+          state.timeLeft = 0;
+          clearInterval(state.timerInterval);
+          clearBotTimers();
+          if (!state.isLiveStudentClient) {
+            enterAnsweringPhase();
+          }
+        }
+      }, 200);
+    }
+
+    function togglePauseAuction() {
+      if (state.roundPhase === 'bidding') {
+        state.roundPhase = 'paused';
+        clearInterval(state.timerInterval);
+        clearBotTimers();
+        pushHostStateToFirebase(false);
+        showToast('หยุดเวลาประมูลชั่วคราว', 'warning');
+      } else if (state.roundPhase === 'paused') {
+        state.roundPhase = 'bidding';
+        const nowMs = window.FB ? window.FB.getServerNow() : Date.now();
+        state.auctionEndTime = nowMs + state.timeLeft * 1000;
+        pushHostStateToFirebase(false);
+        startSyncedCountdownLoop();
+        showToast('เดินเวลาประมูลต่อ!', 'info');
+      }
+      renderAll();
+    }
+
+    function forceEndAuctionTimer() {
+      if (state.roundPhase !== 'bidding' && state.roundPhase !== 'paused') return;
+      clearInterval(state.timerInterval);
+      clearBotTimers();
+      state.timeLeft = 0;
+      state.auctionEndTime = 0;
+      enterAnsweringPhase();
+    }
+
+    function enterAnsweringPhase() {
+      playBuzzerSound();
+      resetAllInConfirm();
+      state.overtimeTriggered = false;
+      state.auctionEndTime = 0;
+      const validBidders = getSortedByBid().filter((t) => t.currentBid > 0);
+      if (validBidders.length === 0) {
+        state.roundPhase = 'idle';
+        state.isAuctionModalOpen = false;
+        pushHostStateToFirebase(false);
+        showToast('หมดเวลาแล้ว! ไม่มีทีมใดเสนอราคาในรอบนี้', 'warning');
+        renderAll();
+        return;
+      }
+
+      state.roundPhase = 'answering';
+      state.eliminatedBidderIds = [];
+      state.activeBidderId = validBidders[0].id;
+      state.lockedAnswer = null;
+      pushHostStateToFirebase(false);
+      showToast(`🏆 ทีม "${validBidders[0].name}" ชนะการประมูล (${validBidders[0].currentBid} เหรียญ)!`, 'success');
+      renderAll();
+    }
+
+    function resolveAnswer(isCorrect) {
+      if (state.roundPhase !== 'answering' || !state.activeBidderId) return;
+      const team = getTeam(state.activeBidderId);
+      const q = getCurrentQuestion();
+      const bloom = getBloomById(q.bloomId);
+      const bonus = getBonusById(q.bonusId);
+      if (!team) return;
+
+      // Deduct bid & mark 2x used if active
+      team.wallet = Math.max(0, team.wallet - team.currentBid);
+      const mult = team.doubleActive ? 2 : 1;
+      if (team.doubleActive) {
+        team.doubleUsed = true;
+        team.doubleActive = false;
+      }
+
+      if (isCorrect) {
+        const earned = bloom.pts * mult;
+        team.score += earned;
+        state.questionResults.push({ qIdx: state.currentQuestionIdx, bloomId: q.bloomId, correct: true, winner: team.name });
+
+        // Apply per-question coin bonus
+        let bonusMsg = '';
+        if (bonus.type === 'winner' && bonus.amount > 0) {
+          team.wallet += bonus.amount;
+          bonusMsg = ` + โบนัส ${bonus.amount} เหรียญ!`;
+        } else if (bonus.type === 'all' && bonus.amount > 0) {
+          state.teams.forEach((t) => { t.wallet += bonus.amount; });
+          bonusMsg = ` + แจกทุกทีม ${bonus.amount} เหรียญ!`;
+        }
+
+        state.roundPhase = 'resolved';
+        state.isAuctionModalOpen = false;
+        playSuccessChime();
+        triggerSuccessFlash();
+        fireConfetti();
+        showToast(`✓ ทีม "${team.name}" ตอบถูก! ได้รับ +${earned} คะแนน${bonusMsg}`, 'success');
+      } else {
+        playWrongSound();
+        state.eliminatedBidderIds.push(team.id);
+        state.lockedAnswer = null;
+
+        const nextCandidates = getSortedByBid().filter(
+          (t) => t.currentBid > 0 && !state.eliminatedBidderIds.includes(t.id)
+        );
+
+        if (nextCandidates.length > 0) {
+          state.activeBidderId = nextCandidates[0].id;
+          showToast(`✗ ตอบผิด! หักเหรียญและส่งสิทธิ์ให้ทีม "${nextCandidates[0].name}"`, 'warning');
+        } else {
+          state.questionResults.push({ qIdx: state.currentQuestionIdx, bloomId: q.bloomId, correct: false, winner: null });
+          if (bonus.type === 'all' && bonus.amount > 0) {
+            state.teams.forEach((t) => { t.wallet += bonus.amount; });
+            showToast(`✗ ไม่มีทีมตอบถูก แต่ทุกทีมได้รับโบนัส +${bonus.amount} เหรียญ!`, 'info');
+          } else {
+            showToast('✗ ตอบผิด! ไม่มีทีมลำดับถัดไปในรอบนี้', 'error');
+          }
+          state.roundPhase = 'resolved';
+          state.isAuctionModalOpen = false;
+        }
+      }
+
+      pushHostStateToFirebase(true);
+      renderAll();
+    }
+
+    function goToNextQuestion() {
+      if (state.currentQuestionIdx + 1 >= state.questions.length) {
+        state.screen = 'finish';
+        pushHostStateToFirebase(false);
+        playSuccessChime();
+        fireConfetti();
+        renderAll();
+        return;
+      }
+      state.currentQuestionIdx += 1;
+      state.roundPhase = 'idle';
+      state.timeLeft = state.maxTime;
+      state.auctionEndTime = 0;
+      state.activeBidderId = null;
+      state.eliminatedBidderIds = [];
+      state.lockedAnswer = null;
+      resetAllInConfirm();
+
+      // Anti-Bankruptcy Safety Net (+50 coins for teams with 0 coins)
+      const rescuedTeams = [];
+      state.teams.forEach((t) => {
+        t.currentBid = 0;
+        t.doubleActive = false;
+        t.lockedAnswer = '';
+        if (t.wallet === 0) {
+          t.wallet = 50;
+          rescuedTeams.push(t.name);
+        }
+      });
+
+      if (rescuedTeams.length > 0) {
+        showToast(`🛟 ระบบกันถังแตก: แจกเบี้ยยังชีพ +50 เหรียญให้ทีม ${rescuedTeams.join(', ')}`, 'info');
+      }
+
+      pushHostStateToFirebase(true);
+      renderAll();
+    }
+
+    /* -----------------------------------------------------------------------
+       8. UTILITY MODALS (COIN DROP / FORCE END / ANALYTICS)
+       ----------------------------------------------------------------------- */
+    function openCoinDropModal() {
+      const sel = document.getElementById('coin-drop-target');
+      sel.innerHTML = `<option value="all">ทุกทีมในห้อง (${state.teams.length} ทีม)</option>` +
+        state.teams.map((t) => `<option value="${t.id}">เฉพาะทีม: ${t.name} (มี ${t.wallet} เหรียญ)</option>`).join('');
+
+      const pills = document.getElementById('coin-drop-pills');
+      pills.innerHTML = [100, 200, 300, 500].map((amt) => `
+        <button
+          onclick="selectCoinDropAmount(${amt})"
+          class="py-2.5 rounded-xl font-display font-bold text-sm tabular-nums cursor-pointer transition-all ${state.coinDropAmount === amt ? 'bg-amber-400 text-slate-950 shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+        >+${amt}</button>
+      `).join('');
+
+      document.getElementById('coin-drop-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function selectCoinDropAmount(amt) {
+      state.coinDropAmount = amt;
+      openCoinDropModal();
+    }
+    function closeCoinDropModal() {
+      document.getElementById('coin-drop-modal').classList.add('hidden');
+    }
+    function executeCoinDrop() {
+      const target = document.getElementById('coin-drop-target').value;
+      const amt = state.coinDropAmount;
+      if (target === 'all') {
+        state.teams.forEach((t) => { t.wallet += amt; });
+        showToast(`🌧️ แจกเหรียญพิเศษ! ทุกทีมได้รับเพิ่ม +${amt.toLocaleString()} เหรียญ!`, 'success');
+      } else {
+        const team = getTeam(target);
+        if (team) {
+          team.wallet += amt;
+          showToast(`🎁 ทีม "${team.name}" ได้รับเหรียญพิเศษ +${amt.toLocaleString()} เหรียญ!`, 'success');
+        }
+      }
+      pushHostStateToFirebase(true);
+      playSuccessChime();
+      closeCoinDropModal();
+      renderAll();
+    }
+
+    function openForceEndModal() {
+      document.getElementById('force-end-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeForceEndModal() {
+      document.getElementById('force-end-modal').classList.add('hidden');
+    }
+    function confirmForceEndMatch() {
+      closeForceEndModal();
+      clearInterval(state.timerInterval);
+      clearBotTimers();
+      resetAllInConfirm();
+      state.isAuctionModalOpen = false;
+      state.roundPhase = 'resolved';
+      state.screen = 'finish';
+      pushHostStateToFirebase(false);
+      playSuccessChime();
+      fireConfetti();
+      showToast('จบการแข่งขันแล้ว! แสดงสรุปอันดับผู้ชนะ', 'success');
+      renderAll();
+    }
+
+    function openAnalyticsModal() {
+      const body = document.getElementById('analytics-body');
+      const insight = document.getElementById('analytics-insight');
+      let weakest = null;
+      let weakestRate = 2;
+
+      const rows = BLOOM_LEVELS.map((b) => {
+        const total = state.questionResults.filter((r) => r.bloomId === b.id).length;
+        const correct = state.questionResults.filter((r) => r.bloomId === b.id && r.correct).length;
+        if (total === 0) return '';
+        const pct = Math.round((correct / total) * 100);
+        if (pct / 100 < weakestRate) {
+          weakestRate = pct / 100;
+          weakest = b;
+        }
+        return `
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-slate-800">${b.label}</span>
+              <span class="tabular-nums text-slate-600">ตอบถูก ${correct}/${total} ข้อ (${pct}%)</span>
+            </div>
+            <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full rounded-full" style="width:${pct}%; background-color:${b.color}"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      body.innerHTML = rows || `<p class="text-sm text-slate-500 text-center py-4">ยังไม่มีข้อมูลการตอบคำถามในคาบนี้</p>`;
+      insight.innerHTML = weakest
+        ? `<b>💡 คำแนะนำสำหรับคาบถัดไป:</b> นักเรียนยังมีอัตราการตอบถูกน้อยที่สุดในระดับ <b>${weakest.label}</b> แนะนำให้เพิ่มตัวอย่างโจทย์ฝึกคิดในระดับนี้เพิ่มเติมครับ`
+        : `<b>💡 คำแนะนำ:</b> เล่นให้ครบอย่างน้อย 1 ข้อเพื่อดูข้อมูลวิเคราะห์ความเข้าใจของนักเรียนครับ`;
+
+      document.getElementById('analytics-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeAnalyticsModal() {
+      document.getElementById('analytics-modal').classList.add('hidden');
+    }
+
+    /* -----------------------------------------------------------------------
+       9. STUDENT ACTIONS & BOT SIMULATION
+       ----------------------------------------------------------------------- */
+    function selectJoinColor(color) {
+      state.selectedJoinColor = color;
+      renderStudentJoinForm();
+    }
+
+    async function submitStudentJoinTeam() {
+      const codeInput = document.getElementById('stu-join-code');
+      const nameInput = document.getElementById('stu-join-name');
+      const roomCode = (codeInput.value || '').trim().toUpperCase();
+      const teamName = nameInput.value.trim();
+
+      if (!roomCode) {
+        showToast('กรุณากรอกรหัสห้องเรียนครับ', 'warning');
+        codeInput.focus();
+        return;
+      }
+      if (!teamName) {
+        showToast('กรุณาพิมพ์ชื่อทีมของคุณก่อนเข้าร่วมครับ', 'warning');
+        nameInput.focus();
+        return;
+      }
+
+      const avatar = makeAvatar(teamName);
+
+      if (window.FB && window.FB.ready && !state.isLiveRoomHost) {
+        showToast('กำลังเชื่อมต่อเข้าห้องเรียน...', 'info');
+        const res = await window.FB.joinRoomAsStudent(roomCode, teamName, state.selectedJoinColor, avatar);
+        if (!res.ok) {
+          showToast(res.reason, 'error');
+          return;
+        }
+        state.roomCode = roomCode;
+        state.isLiveStudentClient = true;
+        state.controlledTeamId = res.uid;
+        state.studentJoinedCustom = true;
+        window.FB.subscribeRoom(roomCode, handleRoomSnapshot);
+        playSuccessChime();
+        showToast(`ยินดีต้อนรับทีม "${teamName}" เข้าสู่ห้อง ${roomCode}!`, 'success');
+        renderAll();
+        return;
+      }
+
+      // Same-device Host preview test mode
+      const newId = 'stu_' + Date.now();
+      const newTeam = {
+        id: newId,
+        name: teamName,
+        avatar,
+        color: state.selectedJoinColor,
+        wallet: state.startingCoins,
+        currentBid: 0,
+        score: 0,
+        doubleActive: false,
+        doubleUsed: false,
+        lockedAnswer: ''
+      };
+      if (state.isLiveRoomHost && window.FB && window.FB.ready) {
+        const { id, ...fbData } = newTeam;
+        await window.FB.hostAddBotTeam(state.roomCode, newId, fbData);
+      } else {
+        state.teams.push(newTeam);
+      }
+      state.controlledTeamId = newId;
+      state.studentJoinedCustom = true;
+      if (state.screen === 'setup') state.screen = 'lobby';
+      playSuccessChime();
+      showToast(`ยินดีต้อนรับทีม "${teamName}" เข้าสู่ห้อง ${state.roomCode}!`, 'success');
+      renderAll();
+    }
+
+    function onSelectStudentTeam(id) {
+      state.controlledTeamId = id;
+      resetAllInConfirm();
+      renderStudentView();
+    }
+
+    function resetAllInConfirm() {
+      state.allInConfirmArmed = false;
+      clearTimeout(state.allInConfirmTimer);
+    }
+
+    async function applyBidIncrement(teamId, amount) {
+      const team = getTeam(teamId);
+      if (!team) return false;
+      const rem = getRemainingCoins(team);
+      if (amount <= 0 || amount > rem) return false;
+
+      if (state.isLiveStudentClient && window.FB && window.FB.ready) {
+        const res = await window.FB.studentPlaceBid(state.roomCode, team.id, amount, team.wallet);
+        if (res.ok) playBidSound();
+        return res.ok;
+      }
+
+      team.currentBid += amount;
+      state.lastBumpedTeamId = team.id;
+
+      // Anti-Sniping (+5s Overtime) in Open Bid mode when <= 3s left
+      if (state.roundPhase === 'bidding' && state.bidMode === 'open' && state.timeLeft > 0 && state.timeLeft <= 3) {
+        state.timeLeft = 5;
+        const nowMs = window.FB ? window.FB.getServerNow() : Date.now();
+        state.auctionEndTime = nowMs + 5000;
+        state.overtimeTriggered = true;
+        playOvertimeChime();
+        showToast('⏱️ ต่อเวลา +5 วิ! มีการเสนอราคาในช่วงโค้งสุดท้าย', 'warning');
+        clearTimeout(state.overtimeTimeout);
+        state.overtimeTimeout = setTimeout(() => {
+          state.overtimeTriggered = false;
+          pushHostStateToFirebase(false);
+          renderTimer();
+        }, 1800);
+      } else {
+        playBidSound();
+      }
+
+      pushHostStateToFirebase(true);
+      renderAll();
+      setTimeout(() => {
+        if (state.lastBumpedTeamId === team.id) state.lastBumpedTeamId = null;
+      }, 400);
+      return true;
+    }
+
+    function studentClickBid(amount) {
+      if (state.roundPhase !== 'bidding') {
+        showToast('รอครูเปิดการประมูลก่อนนะ!', 'warning');
+        return;
+      }
+      resetAllInConfirm();
+      applyBidIncrement(state.controlledTeamId, amount);
+    }
+
+    function studentClickAllIn() {
+      if (state.roundPhase !== 'bidding') return;
+      const team = getTeam(state.controlledTeamId);
+      if (!team) return;
+      const rem = getRemainingCoins(team);
+      if (rem <= 0) return;
+
+      if (!state.allInConfirmArmed) {
+        state.allInConfirmArmed = true;
+        renderStudentView();
+        clearTimeout(state.allInConfirmTimer);
+        state.allInConfirmTimer = setTimeout(() => {
+          state.allInConfirmArmed = false;
+          renderStudentView();
+        }, 3500);
+        return;
+      }
+
+      resetAllInConfirm();
+      applyBidIncrement(team.id, rem);
+      showToast(`🔥 ทีม "${team.name}" เทหมดหน้าตัก ALL-IN!`, 'warning');
+    }
+
+    function toggleDoublePowerup() {
+      const team = getTeam(state.controlledTeamId);
+      if (!team || team.doubleUsed) {
+        showToast('ใช้การ์ดคูณ 2 เท่าไปแล้วในคาบนี้ครับ', 'warning');
+        return;
+      }
+      if (state.roundPhase === 'answering' || state.roundPhase === 'resolved') return;
+      team.doubleActive = !team.doubleActive;
+      if (state.isLiveStudentClient && window.FB && window.FB.ready) {
+        window.FB.studentToggleDouble(state.roomCode, team.id, team.doubleActive);
+      } else {
+        pushHostStateToFirebase(true);
+      }
+      playTone(team.doubleActive ? 740 : 420, 0.1, 'triangle', 0.08);
+      renderAll();
+    }
+
+    function lockStudentAnswer(letter) {
+      if (state.roundPhase !== 'answering' || state.activeBidderId !== state.controlledTeamId) return;
+      state.lockedAnswer = letter;
+      if (state.isLiveStudentClient && window.FB && window.FB.ready) {
+        window.FB.studentLockAnswer(state.roomCode, state.controlledTeamId, letter);
+      } else {
+        pushHostStateToFirebase(false);
+      }
+      playTone(660, 0.08, 'sine', 0.08);
+      setTimeout(() => playTone(880, 0.12, 'sine', 0.08), 70);
+      showToast(`ส่งคำตอบ [ ข้อ ${letter} ] ขึ้นหน้าจอครูแล้ว!`, 'success');
+      renderAll();
+    }
+
+    function simulateBotBids() {
+      if (state.screen !== 'play' || state.roundPhase !== 'bidding') {
+        showToast('กรุณากด "เปิดประมูลรอบนี้!" ก่อนจำลองบอทประมูลครับ', 'warning');
+        return;
+      }
+      clearBotTimers();
+      const candidates = state.teams.filter((t) => t.id !== state.controlledTeamId || state.activeView === 'host');
+      const steps = [10, 50, 50, 100];
+      for (let i = 0; i < 6; i++) {
+        const delay = 450 + i * 750 + Math.random() * 450;
+        const tid = setTimeout(() => {
+          if (state.roundPhase !== 'bidding') return;
+          const pick = candidates[Math.floor(Math.random() * candidates.length)];
+          if (!pick) return;
+          const rem = getRemainingCoins(pick);
+          const inc = steps[Math.floor(Math.random() * steps.length)];
+          if (rem >= inc) applyBidIncrement(pick.id, inc);
+        }, delay);
+        state.botTimeouts.push(tid);
+      }
+      showToast('🤖 บอทกำลังแข่งกันเสนอราคา...', 'info');
+    }
+
+    function switchView(view) {
+      state.activeView = view;
+      document.getElementById('host-view').classList.toggle('hidden', view !== 'host');
+      document.getElementById('student-view').classList.toggle('hidden', view !== 'student');
+
+      const hostBtn = document.getElementById('nav-host-btn');
+      const stuBtn = document.getElementById('nav-student-btn');
+      if (hostBtn && stuBtn) {
+        hostBtn.className = view === 'host'
+          ? 'px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all'
+          : 'px-3.5 py-2 rounded-xl hover:bg-slate-800 text-slate-300 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all';
+        stuBtn.className = view === 'student'
+          ? 'px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all'
+          : 'px-3.5 py-2 rounded-xl hover:bg-slate-800 text-slate-300 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all';
+      }
+      renderAll();
+    }
+
+    function copyRoomCode() {
+      const inp = document.createElement('input');
+      inp.value = state.roomCode;
+      document.body.appendChild(inp);
+      inp.select();
+      try {
+        document.execCommand('copy');
+        showToast(`คัดลอกรหัสห้อง "${state.roomCode}" แล้ว!`, 'success');
+      } catch (e) {
+        showToast(`รหัสห้องคือ ${state.roomCode}`, 'info');
+      }
+      document.body.removeChild(inp);
+    }
+
+    /* -----------------------------------------------------------------------
+       10. RENDERING ENGINE
+       ----------------------------------------------------------------------- */
+    function renderAll() {
+      document.getElementById('screen-setup').classList.toggle('hidden', state.screen !== 'setup');
+      document.getElementById('screen-lobby').classList.toggle('hidden', state.screen !== 'lobby');
+      document.getElementById('screen-play').classList.toggle('hidden', state.screen !== 'play');
+      document.getElementById('screen-finish').classList.toggle('hidden', state.screen !== 'finish');
+
+      if (state.screen === 'setup') renderSetupScreen();
+      if (state.screen === 'lobby') renderLobbyScreen();
+      if (state.screen === 'play') renderPlayDashboard();
+      if (state.screen === 'finish') renderFinishScreen();
+
+      renderAuctionModal();
+      renderStudentView();
+      lucide.createIcons();
+    }
+
+    function renderSetupScreen() {
+      const list = document.getElementById('setup-questions-list');
+      list.innerHTML = state.questions.map((q, idx) => {
+        const b = getBloomById(q.bloomId);
+        return `
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-slate-900 text-white font-display font-bold text-xs flex items-center justify-center shrink-0">
+                ${idx + 1}
+              </span>
+              <select
+                onchange="updateQuestionBloom(${idx}, this.value)"
+                class="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                ${BLOOM_LEVELS.map((lvl) => `<option value="${lvl.id}" ${lvl.id === q.bloomId ? 'selected' : ''}>${lvl.label} • ${lvl.pts} แต้ม</option>`).join('')}
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <select
+                onchange="updateQuestionBonus(${idx}, this.value)"
+                class="rounded-xl border border-amber-300/80 bg-amber-50/70 px-2.5 py-1.5 text-xs font-bold text-amber-900 focus:outline-none"
+              >
+                ${BONUS_OPTIONS.map((bo) => `<option value="${bo.id}" ${bo.id === q.bonusId ? 'selected' : ''}>🪙 ${bo.label}</option>`).join('')}
+              </select>
+              <button
+                onclick="removeQuestionRow(${idx})"
+                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 cursor-pointer"
+                title="ลบข้อนี้"
+              >
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('setup-time-pills').innerHTML = [15, 20, 30].map((sec) => `
+        <button
+          onclick="setSetupTime(${sec})"
+          class="flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${state.maxTime === sec ? 'bg-slate-900 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'}"
+        >${sec} วินาที</button>
+      `).join('');
+
+      document.getElementById('setup-mode-open').className = state.bidMode === 'open'
+        ? 'py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm cursor-pointer'
+        : 'py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer';
+      document.getElementById('setup-mode-blind').className = state.bidMode === 'blind'
+        ? 'py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm cursor-pointer'
+        : 'py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer';
+
+      const totalPts = state.questions.reduce((s, q) => s + getBloomById(q.bloomId).pts, 0);
+      const rec = calculateRecommendedCoins(state.expectedTeams);
+      document.getElementById('setup-expected-teams-lbl').textContent = `${state.expectedTeams} ทีม`;
+      document.getElementById('calc-total-q').textContent = `${state.questions.length} ข้อ`;
+      document.getElementById('calc-total-pts').textContent = `${totalPts.toLocaleString()} แต้ม`;
+      document.getElementById('setup-starting-coins').value = state.startingCoins;
+      document.getElementById('calc-rec-hint').innerHTML = `แนะนำ <b class="text-amber-300 tabular-nums">${rec.toLocaleString()}</b> เหรียญ`;
+    }
+
+    function renderLobbyScreen() {
+      document.getElementById('lobby-q-summary').textContent = `${state.questions.length} ข้อ`;
+      document.getElementById('lobby-team-count').textContent = `${state.teams.length} ทีม`;
+      document.getElementById('lobby-coins-per-team').textContent = `🪙 ${state.startingCoins.toLocaleString()}`;
+      document.getElementById('lobby-room-code-display').textContent = state.roomCode;
+
+      // Generate scannable QR Code pointing to ?join=ROOMCODE
+      const qrImg = document.getElementById('lobby-qr-img');
+      const qrFallback = document.getElementById('lobby-qr-fallback');
+      if (qrImg) {
+        const baseUrl = window.location.href.split('?')[0];
+        const joinUrl = `${baseUrl}?join=${encodeURIComponent(state.roomCode)}`;
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=${encodeURIComponent(joinUrl)}`;
+        if (qrImg.dataset.lastSrc !== qrSrc) {
+          qrImg.dataset.lastSrc = qrSrc;
+          qrImg.classList.remove('hidden');
+          if (qrFallback) qrFallback.classList.add('hidden');
+          qrImg.src = qrSrc;
+        }
+      }
+
+      const grid = document.getElementById('lobby-teams-grid');
+      if (state.teams.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center">
+            <p class="font-display font-bold text-base text-slate-500">กำลังรอทีมนักเรียนสแกน QR หรือกรอกรหัส <span class="text-indigo-600">${state.roomCode}</span> เพื่อเข้าร่วม...</p>
+            <p class="text-xs text-slate-400 mt-1">หรือกดปุ่ม "+ จำลองทีมเข้าห้อง" ด้านบนขวาเพื่อทดสอบก่อนสอนจริง</p>
+          </div>
+        `;
+      } else {
+        grid.innerHTML = state.teams.map((t) => `
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-display font-bold text-sm text-white shrink-0" style="background-color:${t.color}">
+                ${t.avatar}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-display font-bold text-base text-slate-900 truncate">${t.name}</h4>
+                <span class="text-xs font-semibold text-amber-600 tabular-nums">🪙 ${t.wallet.toLocaleString()} เหรียญ</span>
+              </div>
+            </div>
+            <button
+              onclick="removeLobbyTeam('${t.id}')"
+              class="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 cursor-pointer"
+              title="นำทีมออก"
+            >
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('btn-start-match').disabled = state.teams.length < 2;
+    }
+
+    function renderPlayDashboard() {
+      const q = getCurrentQuestion();
+      const bloom = getBloomById(q.bloomId);
+      const bonus = getBonusById(q.bonusId);
+      const qNum = state.currentQuestionIdx + 1;
+      const totalQ = state.questions.length;
+      const isResolved = state.roundPhase === 'resolved';
+      const isLastQ = qNum >= totalQ;
+
+      document.getElementById('play-room-code-badge').textContent = `ห้อง ${state.roomCode}`;
+      document.getElementById('play-q-progress').textContent = `คำถามข้อที่ ${qNum} / ${totalQ}`;
+      document.getElementById('play-q-points').textContent = bloom.pts.toLocaleString();
+
+      const bonusBadge = document.getElementById('play-bonus-badge');
+      if (bonus.type !== 'none') {
+        bonusBadge.textContent = `🪙 โบนัส: ${bonus.short}`;
+        bonusBadge.classList.remove('hidden');
+      } else {
+        bonusBadge.classList.add('hidden');
+      }
+
+      const modeBtn = document.getElementById('btn-play-bid-mode');
+      modeBtn.innerHTML = state.bidMode === 'blind'
+        ? `<i data-lucide="eye-off" class="w-4 h-4 text-indigo-600"></i><span>โหมดปิดราคา (Blind)</span>`
+        : `<i data-lucide="eye" class="w-4 h-4"></i><span>โหมดเปิดราคา (Open)</span>`;
+
+      const mainBtn = document.getElementById('btn-main-stage-action');
+      const hint = document.getElementById('play-stage-hint');
+      if (isResolved) {
+        hint.textContent = isLastQ
+          ? 'ครบทุกข้อแล้ว! กดปุ่มด้านล่างเพื่อประกาศอันดับผู้ชนะประจำคาบ'
+          : 'จบรอบนี้เรียบร้อยแล้ว! กดปุ่มด้านล่างเพื่อไปคำถามข้อถัดไป';
+        mainBtn.className = 'px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 active:scale-95 text-slate-950 font-display font-bold text-xl shadow-xl flex items-center gap-3 transition-all cursor-pointer';
+        mainBtn.innerHTML = isLastQ
+          ? `<i data-lucide="trophy" class="w-6 h-6"></i><span>ดูสรุปอันดับผู้ชนะ 🏆</span>`
+          : `<i data-lucide="arrow-right-circle" class="w-6 h-6"></i><span>ไปคำถามข้อถัดไป (ข้อ ${qNum + 1})</span>`;
+      } else {
+        hint.textContent = 'ให้นักเรียนอ่านโจทย์บนกระดาน/สไลด์ให้เรียบร้อย เมื่อพร้อมแล้วกดปุ่มด้านล่างเพื่อเปิดการประมูล!';
+        mainBtn.className = 'px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 font-display font-bold text-xl shadow-xl flex items-center gap-3 transition-all cursor-pointer';
+        mainBtn.innerHTML = `<i data-lucide="gavel" class="w-6 h-6"></i><span>เปิดประมูลรอบนี้!</span>`;
+      }
+
+      const sorted = getSortedByScore();
+      document.getElementById('play-scoreboard-grid').innerHTML = sorted.map((t, i) => `
+        <div class="rounded-2xl p-4 border ${i === 0 ? 'bg-amber-50/70 border-amber-300 shadow-sm' : 'bg-slate-50 border-slate-200/80'} flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="font-display font-bold text-sm w-6 text-center ${i === 0 ? 'text-amber-600' : 'text-slate-400'}">#${i + 1}</span>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-xs text-white shrink-0" style="background-color:${t.color}">
+              ${t.avatar}
+            </div>
+            <div class="min-w-0">
+              <h4 class="font-display font-bold text-sm text-slate-900 truncate">${t.name}</h4>
+              <span class="text-[11px] font-semibold text-amber-600 tabular-nums">🪙 ${t.wallet.toLocaleString()} เหรียญ</span>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="font-display font-bold text-xl text-slate-900 tabular-nums">${t.score.toLocaleString()}</span>
+            <span class="text-[10px] text-slate-500 block leading-none">คะแนน</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderTimer() {
+      const digits = document.getElementById('modal-timer-digits');
+      const bar = document.getElementById('modal-timer-bar');
+      const otBadge = document.getElementById('modal-overtime-badge');
+      const stuMini = document.getElementById('stu-timer-mini');
+
+      const sec = Math.max(0, state.timeLeft);
+      const formatted = `00:${String(sec).padStart(2, '0')}`;
+      const pct = Math.min(100, Math.max(0, (sec / state.maxTime) * 100));
+      const isUrgent = state.roundPhase === 'bidding' && sec <= 5 && sec > 0;
+
+      if (digits) {
+        digits.textContent = formatted;
+        digits.className = `font-display font-bold text-4xl sm:text-5xl tabular-nums ${isUrgent ? 'text-rose-400 animate-urgent-shake' : 'text-white'}`;
+      }
+      if (bar) {
+        bar.style.width = `${pct}%`;
+        bar.className = `h-full rounded-full transition-all duration-200 ${isUrgent ? 'bg-rose-500' : 'bg-indigo-500'}`;
+      }
+      if (otBadge) otBadge.classList.toggle('hidden', !state.overtimeTriggered);
+      if (stuMini) {
+        stuMini.textContent = state.roundPhase === 'bidding' ? `⏱️ ${formatted}` : (state.roundPhase === 'answering' ? '🏆 กำลังตอบ' : 'รอเริ่มรอบ');
+      }
+    }
+
+    function renderAuctionModal() {
+      const modal = document.getElementById('auction-modal');
+      modal.classList.toggle('hidden', !state.isAuctionModalOpen);
+      if (!state.isAuctionModalOpen) return;
+
+      const q = getCurrentQuestion();
+      const bloom = getBloomById(q.bloomId);
+      const bonus = getBonusById(q.bonusId);
+      const isBlindActive = state.bidMode === 'blind' && (state.roundPhase === 'bidding' || state.roundPhase === 'paused');
+
+      document.getElementById('modal-q-badge').textContent = `ข้อที่ ${state.currentQuestionIdx + 1} • ${bloom.pts} คะแนน`;
+      document.getElementById('modal-mode-badge').textContent = state.bidMode === 'blind' ? 'โหมดปิดราคา (Blind)' : 'โหมดเปิดราคา (Open)';
+
+      const bonusPill = document.getElementById('modal-bonus-pill');
+      if (bonus.type !== 'none') {
+        bonusPill.textContent = `🪙 ${bonus.short}`;
+        bonusPill.classList.remove('hidden');
+      } else {
+        bonusPill.classList.add('hidden');
+      }
+
+      const blindCounter = document.getElementById('modal-blind-counter');
+      if (isBlindActive) {
+        const submittedCount = state.teams.filter((t) => t.currentBid > 0).length;
+        blindCounter.textContent = `ส่งราคาแล้ว ${submittedCount}/${state.teams.length} ทีม`;
+        blindCounter.classList.remove('hidden');
+      } else {
+        blindCounter.classList.add('hidden');
+      }
+
+      const pauseBtn = document.getElementById('btn-modal-pause');
+      const forceBtn = document.getElementById('btn-modal-force-end');
+      const isBiddingOrPaused = state.roundPhase === 'bidding' || state.roundPhase === 'paused';
+      pauseBtn.classList.toggle('hidden', !isBiddingOrPaused);
+      forceBtn.classList.toggle('hidden', !isBiddingOrPaused);
+      pauseBtn.innerHTML = state.roundPhase === 'paused'
+        ? `<i data-lucide="play" class="w-3.5 h-3.5"></i><span>เดินเวลาต่อ</span>`
+        : `<i data-lucide="pause" class="w-3.5 h-3.5"></i><span>หยุดเวลา</span>`;
+
+      renderTimer();
+
+      // Resolution Banner
+      const resBanner = document.getElementById('modal-resolution-banner');
+      if (state.roundPhase === 'answering' && state.activeBidderId) {
+        const winner = getTeam(state.activeBidderId);
+        if (winner) {
+          resBanner.classList.remove('hidden');
+          const av = document.getElementById('res-winner-avatar');
+          av.textContent = winner.avatar;
+          av.style.backgroundColor = winner.color;
+          document.getElementById('res-winner-name').textContent = winner.name;
+          document.getElementById('res-double-badge').classList.toggle('hidden', !winner.doubleActive);
+          const mult = winner.doubleActive ? 2 : 1;
+          document.getElementById('res-winner-meta').textContent =
+            `ราคาประมูล ${winner.currentBid.toLocaleString()} เหรียญ • ${state.lockedAnswer ? 'ส่งคำตอบแล้ว!' : 'กำลังรอเลือกคำตอบ...'}`;
+          document.getElementById('btn-resolve-correct-text').textContent = `ตอบถูก (+${bloom.pts * mult} แต้ม)`;
+
+          const lockBox = document.getElementById('res-locked-answer-box');
+          if (state.lockedAnswer) {
+            lockBox.classList.remove('hidden');
+            document.getElementById('res-locked-answer-letter').textContent = state.lockedAnswer;
+          } else {
+            lockBox.classList.add('hidden');
+          }
+        }
+      } else {
+        resBanner.classList.add('hidden');
+      }
+
+      // Live Bidding Leaderboard Cards
+      const displayTeams = isBlindActive ? state.teams : getSortedByBid();
+      document.getElementById('modal-bidding-grid').innerHTML = displayTeams.map((t, idx) => {
+        const isLeader = !isBlindActive && idx === 0 && t.currentBid > 0;
+        const isActiveTurn = state.roundPhase === 'answering' && state.activeBidderId === t.id;
+        const isElim = state.eliminatedBidderIds.includes(t.id);
+        const bumped = state.lastBumpedTeamId === t.id;
+        const rem = getRemainingCoins(t);
+
+        let bidDisplay = `<span class="font-display font-bold text-3xl text-white tabular-nums ${bumped ? 'animate-bid-pop inline-block' : ''}">${t.currentBid.toLocaleString()}</span> <span class="text-xs text-amber-400 font-bold">เหรียญ</span>`;
+        if (isBlindActive) {
+          bidDisplay = t.currentBid > 0
+            ? `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold text-sm">ส่งราคาแล้ว ✓</span>`
+            : `<span class="text-slate-500 font-bold text-sm">กำลังคิดราคา...</span>`;
+        }
+
+        return `
+          <div class="rounded-2xl p-4 border transition-all ${
+            isActiveTurn ? 'bg-amber-500/15 border-amber-400 leader-glow' :
+            isLeader ? 'bg-slate-800/95 border-amber-400/70 leader-glow' :
+            isElim ? 'bg-slate-900/50 border-slate-800 opacity-45' :
+            'bg-slate-800/70 border-slate-700/80'
+          }">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center font-display font-bold text-xs text-white shrink-0" style="background-color:${t.color}">
+                  ${t.avatar}
+                </div>
+                <div class="min-w-0">
+                  <h4 class="font-display font-bold text-sm text-white truncate">${t.name}</h4>
+                  <span class="text-[11px] text-slate-400 tabular-nums">คงเหลือ: ${rem.toLocaleString()}</span>
+                </div>
+              </div>
+              ${isLeader ? `<span class="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 text-[11px] font-bold shrink-0">👑 #1</span>` : (!isBlindActive ? `<span class="text-xs font-bold text-slate-500">#${idx + 1}</span>` : '')}
+            </div>
+            <div class="flex items-baseline justify-between">
+              <div>${bidDisplay}</div>
+              ${t.doubleActive ? `<span class="px-2 py-0.5 rounded-md bg-fuchsia-500/30 border border-fuchsia-400/50 text-fuchsia-300 text-[10px] font-bold">⚡ 2x</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFinishScreen() {
+      const sorted = getSortedByScore();
+      const top3 = sorted.slice(0, 3);
+      const medals = ['🥇 แชมป์ประจำคาบ', '🥈 รองอันดับ 1', '🥉 รองอันดับ 2'];
+      document.getElementById('finish-podium').innerHTML = top3.map((t, i) => `
+        <div class="rounded-3xl p-5 border ${i === 0 ? 'bg-gradient-to-b from-amber-500/25 to-slate-900 border-amber-400 sm:-translate-y-2 shadow-xl' : 'bg-slate-800/80 border-slate-700'} flex flex-col items-center gap-2">
+          <span class="text-xs font-bold ${i === 0 ? 'text-amber-300' : 'text-slate-300'}">${medals[i]}</span>
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl text-white shadow-md" style="background-color:${t.color}">
+            ${t.avatar}
+          </div>
+          <h4 class="font-display font-bold text-lg text-white truncate max-w-full">${t.name}</h4>
+          <span class="font-display font-bold text-3xl text-amber-300 tabular-nums">${t.score.toLocaleString()} <span class="text-xs font-medium text-slate-300">แต้ม</span></span>
+          <span class="text-[11px] text-slate-400 tabular-nums">เหรียญเหลือ: ${t.wallet.toLocaleString()}</span>
+        </div>
+      `).join('');
+
+      const rest = sorted.slice(3);
+      document.getElementById('finish-rest-list').innerHTML = rest.map((t, i) => `
+        <div class="bg-slate-800/70 border border-slate-700/70 rounded-2xl px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-sm text-slate-400">#${i + 4}</span>
+            <span class="font-display font-bold text-sm text-white">${t.name}</span>
+          </div>
+          <span class="font-display font-bold text-base text-white tabular-nums">${t.score.toLocaleString()} แต้ม</span>
+        </div>
+      `).join('');
+    }
+
+    function renderStudentJoinForm() {
+      document.getElementById('stu-color-picker').innerHTML = TEAM_COLORS.map((c) => `
+        <button
+          type="button"
+          onclick="selectJoinColor('${c}')"
+          class="w-9 h-9 rounded-xl transition-all cursor-pointer ${state.selectedJoinColor === c ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'}"
+          style="background-color:${c}"
+        ></button>
+      `).join('');
+    }
+
+    function renderStudentView() {
+      const joinScreen = document.getElementById('student-join-screen');
+      const ctrlScreen = document.getElementById('student-ctrl-screen');
+      const helperBar = document.getElementById('student-helper-bar');
+
+      const showJoin = (state.screen === 'setup' || state.screen === 'lobby') && !state.studentJoinedCustom;
+      joinScreen.classList.toggle('hidden', !showJoin);
+      ctrlScreen.classList.toggle('hidden', showJoin);
+      helperBar.classList.toggle('hidden', showJoin || state.isLiveStudentClient || state.isStudentDeepLink);
+
+      if (showJoin) {
+        renderStudentJoinForm();
+        return;
+      }
+
+      const sel = document.getElementById('student-team-selector');
+      sel.innerHTML = state.teams.map((t) => `<option value="${t.id}" ${t.id === state.controlledTeamId ? 'selected' : ''}>${t.name}</option>`).join('');
+
+      const team = getTeam(state.controlledTeamId) || state.teams[0];
+      if (!team) return;
+
+      const q = getCurrentQuestion();
+      const bloom = getBloomById(q.bloomId);
+      const bonus = getBonusById(q.bonusId);
+      const rem = getRemainingCoins(team);
+
+      const av = document.getElementById('stu-avatar');
+      av.textContent = team.avatar;
+      av.style.backgroundColor = team.color;
+      document.getElementById('stu-team-name').textContent = team.name;
+      document.getElementById('stu-room-code-label').textContent = `ห้อง ${state.roomCode}`;
+      document.getElementById('stu-wallet-coins').textContent = `🪙 ${rem.toLocaleString()}`;
+      document.getElementById('stu-total-score').textContent = `⭐ ${team.score.toLocaleString()}`;
+      document.getElementById('stu-q-label').textContent = `ข้อที่ ${state.currentQuestionIdx + 1} • เดิมพัน ${bloom.pts} คะแนน`;
+
+      const bonusStrip = document.getElementById('stu-bonus-strip');
+      if (bonus.type !== 'none') {
+        bonusStrip.textContent = `🪙 โบนัสรอบนี้: ${bonus.short}`;
+        bonusStrip.classList.remove('hidden');
+      } else {
+        bonusStrip.classList.add('hidden');
+      }
+
+      renderTimer();
+
+      // Contextual Status Banner
+      const banner = document.getElementById('stu-status-banner');
+      const title = document.getElementById('stu-status-title');
+      const sub = document.getElementById('stu-status-sub');
+      const sortedBid = getSortedByBid();
+      const leader = sortedBid[0];
+      const isWinnerAnswering = state.roundPhase === 'answering' && state.activeBidderId === team.id;
+
+      if (state.screen === 'lobby') {
+        banner.className = 'rounded-2xl p-4 text-center border bg-indigo-500/15 border-indigo-400/40';
+        title.textContent = 'เข้าห้องสำเร็จแล้ว! 🎉';
+        sub.textContent = 'รอครูเริ่มเกมบนหน้าจอโปรเจคเตอร์สักครู่...';
+      } else if (state.screen === 'finish') {
+        banner.className = 'rounded-2xl p-4 text-center border bg-amber-500/20 border-amber-400/50';
+        title.textContent = '🏆 จบการแข่งขันแล้ว!';
+        sub.textContent = `คะแนนรวมของทีมคุณคือ ${team.score.toLocaleString()} คะแนน`;
+      } else if (isWinnerAnswering) {
+        banner.className = 'rounded-2xl p-4 text-center border bg-emerald-500/20 border-emerald-400';
+        title.textContent = '🏆 ทีมคุณชนะประมูล!';
+        sub.textContent = 'เลือกคำตอบ A / B / C / D ด้านล่างได้เลย';
+      } else if (state.roundPhase === 'bidding') {
+        if (state.bidMode === 'blind') {
+          banner.className = team.currentBid > 0
+            ? 'rounded-2xl p-4 text-center border bg-emerald-500/15 border-emerald-400/50'
+            : 'rounded-2xl p-4 text-center border bg-indigo-500/15 border-indigo-400/50';
+          title.textContent = team.currentBid > 0 ? `🔒 ส่งราคาปิดแล้ว (${team.currentBid} เหรียญ)` : '🔒 โหมดปิดราคา (Blind Bid)';
+          sub.textContent = 'เพื่อนจะไม่เห็นราคาของคุณ กดเพิ่มราคาได้จนหมดเวลา';
+        } else if (leader && leader.id === team.id && team.currentBid > 0) {
+          banner.className = 'rounded-2xl p-4 text-center border bg-emerald-500/20 border-emerald-400';
+          title.textContent = `🔥 คุณเสนอราคาสูงสุด! (${team.currentBid} เหรียญ)`;
+          sub.textContent = 'จับตาดูเวลาไว้ อย่าให้ใครมาปาดหน้า!';
+        } else if (leader && leader.currentBid > 0) {
+          banner.className = 'rounded-2xl p-4 text-center border bg-rose-500/20 border-rose-400 animate-pulse';
+          title.textContent = `⚠️ โดนแซงโดย ${leader.name} (${leader.currentBid} เหรียญ)!`;
+          sub.textContent = 'รีบกดเพิ่มราคาเพื่อชิงสิทธิ์ตอบคำถาม!';
+        } else {
+          banner.className = 'rounded-2xl p-4 text-center border bg-amber-500/20 border-amber-400';
+          title.textContent = '⚡ เปิดประมูลแล้ว!';
+          sub.textContent = 'กดปุ่มด้านล่างเพื่อเสนอราคาเลย!';
+        }
+      } else {
+        banner.className = 'rounded-2xl p-4 text-center border bg-slate-800/80 border-slate-700';
+        title.textContent = state.roundPhase === 'answering' ? `กำลังรอทีม "${getTeam(state.activeBidderId)?.name || ''}" ตอบ...` : 'รอครูเปิดประมูลรอบถัดไป...';
+        sub.textContent = 'อ่านโจทย์บนกระดานแล้ววางแผนกับเพื่อนในทีมเลย!';
+      }
+
+      // Toggle Bidding Pad vs Winner Answer Pad
+      document.getElementById('stu-bidding-pad').classList.toggle('hidden', isWinnerAnswering);
+      document.getElementById('stu-answer-pad').classList.toggle('hidden', !isWinnerAnswering);
+
+      if (isWinnerAnswering) {
+        document.querySelectorAll('.stu-ans-btn').forEach((btn) => {
+          const isPicked = state.lockedAnswer === btn.dataset.letter;
+          btn.className = `stu-ans-btn py-6 rounded-2xl border-2 font-display font-bold text-3xl transition-all cursor-pointer ${
+            isPicked ? 'bg-emerald-500 border-emerald-300 text-slate-950 scale-105 shadow-lg' : 'bg-slate-800 hover:bg-indigo-600 active:scale-95 border-slate-700 text-white'
+          }`;
+        });
+        return;
+      }
+
+      document.getElementById('stu-current-bid').textContent = team.currentBid.toLocaleString();
+      const canBid = state.roundPhase === 'bidding';
+      document.getElementById('btn-bid-10').disabled = !canBid || rem < 10;
+      document.getElementById('btn-bid-50').disabled = !canBid || rem < 50;
+      document.getElementById('btn-bid-100').disabled = !canBid || rem < 100;
+
+      const allInBtn = document.getElementById('btn-bid-allin');
+      allInBtn.disabled = !canBid || rem <= 0;
+      allInBtn.textContent = state.allInConfirmArmed
+        ? `⚠️ แน่ใจนะ? กดอีกครั้งเพื่อ ALL-IN (+${rem.toLocaleString()})`
+        : `🔥 เทหมดหน้าตัก ALL-IN (+${rem.toLocaleString()} เหรียญ)`;
+
+      const dblBtn = document.getElementById('btn-double-powerup');
+      if (team.doubleUsed) {
+        dblBtn.className = 'w-full py-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-600 text-xs font-bold cursor-not-allowed';
+        dblBtn.textContent = '⚡ ใช้การ์ดคูณ 2 เท่าไปแล้ว';
+      } else if (team.doubleActive) {
+        dblBtn.className = 'w-full py-3 rounded-2xl bg-fuchsia-600 border border-fuchsia-400 text-white text-xs font-bold shadow-md cursor-pointer';
+        dblBtn.textContent = '⚡ เปิดใช้การ์ดคูณ 2 เท่าอยู่! (แตะเพื่อยกเลิก)';
+      } else {
+        dblBtn.className = 'w-full py-3 rounded-2xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold cursor-pointer';
+        dblBtn.textContent = '⚡ การ์ดคูณ 2 เท่า (ใช้ได้ 1 ครั้ง/คาบ)';
+      }
+    }
+
+    /* -----------------------------------------------------------------------
+       11. BOOTSTRAP ON LOAD (?join=ROOMCODE DEEP-LINK SUPPORT)
+       ----------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      state.startingCoins = calculateRecommendedCoins(state.expectedTeams);
+
+      const params = new URLSearchParams(window.location.search);
+      const joinParam = params.get('join');
+      if (joinParam) {
+        state.isStudentDeepLink = true;
+        state.roomCode = joinParam.trim().toUpperCase();
+        const codeInput = document.getElementById('stu-join-code');
+        if (codeInput) codeInput.value = state.roomCode;
+        const nav = document.getElementById('prototype-switcher-nav');
+        if (nav) nav.classList.add('hidden');
+        switchView('student');
+        return;
+      }
+
+      renderAll();
+    });
+  </script>
+</body>
+</html>
