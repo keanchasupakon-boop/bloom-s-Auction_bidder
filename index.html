@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bloom's Auction — เกมประมูลความรู้ในห้องเรียน</title>
-
+<title>BIDQUEST — เกมประมูลความรู้ในห้องเรียน</title>
+  
   <!-- Fonts: Anuphan + IBM Plex Sans Thai -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -122,7 +122,7 @@
             <i data-lucide="gavel" class="w-6 h-6"></i>
           </div>
           <div>
-            <h1 class="font-display font-bold text-2xl text-slate-900 tracking-tight">Bloom's Auction</h1>
+<h1 class="font-display font-bold text-2xl text-slate-900 tracking-tight">BIDQUEST</h1>
             <p class="text-xs text-slate-500 font-medium">ระบบเกมประมูลความรู้แบบเรียลไทม์สำหรับห้องเรียน</p>
           </div>
         </div>
@@ -491,8 +491,8 @@
           <div class="w-9 h-9 rounded-xl bg-[#0F172A] text-amber-400 flex items-center justify-center shrink-0">
             <i data-lucide="gavel" class="w-5 h-5"></i>
           </div>
-          <div class="flex items-center flex-wrap gap-2">
-            <span class="font-display font-bold text-base text-slate-900">Bloom's Auction</span>
+<div class="flex items-center flex-wrap gap-2">
+            <span class="font-display font-bold text-base text-slate-900">BIDQUEST</span>
             <span id="play-class-unit-badge" class="px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white text-xs font-bold">
               ม.5/2 • U5R1
             </span>
@@ -523,13 +523,19 @@
             <i data-lucide="eye" class="w-4 h-4"></i>
             <span>โหมดเปิดราคา</span>
           </button>
-
-          <button
+<button
             onclick="openCoinDropModal()"
             class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <span>🪙</span>
             <span>แจกเหรียญด่วน</span>
+          </button>
+          <button
+            onclick="openTeacherEditModal()"
+            class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>แก้คะแนน/เหรียญ</span>
           </button>
 
           <button
@@ -623,14 +629,23 @@
         </div>
       </div>
 
-      <!-- Persistent Bottom Victory Points Scoreboard -->
+<!-- Persistent Bottom Victory Points Scoreboard -->
       <div class="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-display font-bold text-lg text-slate-900 flex items-center gap-2">
             <i data-lucide="trophy" class="w-5 h-5 text-amber-500"></i>
             ตารางคะแนนรวมทุกทีม (Victory Points)
           </h2>
-          <span class="text-xs text-slate-500 font-medium">เรียงตามคะแนนสะสมสูงสุด &bull; แสดงเหรียญคงเหลือปัจจุบัน</span>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="text-xs text-slate-500 font-medium">เรียงตามคะแนนสะสมสูงสุด &bull; แสดงเหรียญคงเหลือปัจจุบัน</span>
+            <button
+              onclick="openTeacherEditModal()"
+              class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <i data-lucide="lock" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>แก้ไข / รีเซ็ตเหรียญ (ครู)</span>
+            </button>
+          </div>
         </div>
         <div id="play-scoreboard-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
       </div>
@@ -643,8 +658,8 @@
       <div class="bg-[#0F172A] text-white rounded-[32px] p-8 sm:p-10 shadow-2xl text-center relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none"></div>
         <div class="relative z-10 max-w-3xl mx-auto space-y-6">
-          <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
-            🏆 จบการแข่งขัน Bloom's Auction!
+<span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+            🏆 จบการแข่งขัน BIDQUEST!
           </span>
           <h1 class="font-display font-bold text-3xl sm:text-5xl">สรุปอันดับผู้ชนะประจำคาบ</h1>
 
@@ -941,11 +956,122 @@
           <button onclick="executeCoinDrop(300)" class="py-3 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 font-display font-bold text-amber-900 active:scale-95 cursor-pointer">+300</button>
           <button onclick="executeCoinDrop(500)" class="py-3 rounded-xl bg-amber-400 hover:bg-amber-300 font-display font-bold text-slate-950 active:scale-95 cursor-pointer">+500</button>
         </div>
+</div>
+    </div>
+  </div>
+
+  <!-- Teacher PIN Protected Score & Coin Editor Modal -->
+  <div id="teacher-edit-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="animate-modal-in w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl space-y-5 max-h-[88vh] flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-slate-900">ระบบจัดการคะแนนและเหรียญ (เฉพาะครู)</h3>
+            <p class="text-xs text-slate-500">ป้องกันนักเรียนแก้ไขเอง &bull; ล็อกอัตโนมัติทุกครั้งที่ปิดหน้าต่าง</p>
+          </div>
+        </div>
+        <button onclick="closeTeacherEditModal()" class="p-2 rounded-xl hover:bg-slate-100 text-slate-500 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- STEP 1: PIN Gate -->
+      <div id="teacher-pin-gate" class="py-6 text-center space-y-4 max-w-xs mx-auto w-full">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+          <i data-lucide="key-round" class="w-7 h-7"></i>
+        </div>
+        <div class="space-y-1">
+          <h4 class="font-display font-bold text-lg text-slate-900">กรอกรหัสผ่านครูผู้สอน</h4>
+          <p class="text-xs text-slate-500">กรอกรหัส 4 หลัก เพื่อปลดล็อกการแก้ไขคะแนนและรีเซ็ตเหรียญ</p>
+        </div>
+        <div class="space-y-2">
+          <input
+            id="teacher-pin-input"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            autocomplete="off"
+            placeholder="••••"
+            onkeydown="if(event.key==='Enter') verifyTeacherPin()"
+            class="w-full border-2 border-slate-200 focus:border-indigo-600 rounded-2xl px-4 py-3 text-center font-display font-bold text-2xl tracking-[0.6em] text-slate-900 outline-none"
+          />
+          <p id="teacher-pin-error" class="hidden text-xs font-bold text-rose-600">รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeTeacherEditModal()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm cursor-pointer">
+            ยกเลิก
+          </button>
+          <button onclick="verifyTeacherPin()" class="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm cursor-pointer">
+            ปลดล็อก
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Unlocked Editor Body -->
+      <div id="teacher-editor-body" class="hidden flex-1 flex flex-col gap-4 overflow-hidden">
+        <!-- Bulk Reset Controls -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3 shrink-0">
+          <div class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-600"></i>
+            คำสั่งรีเซ็ตด่วน (มีผลกับทุกทีมพร้อมกัน)
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5">
+              <span class="text-xs font-bold text-slate-500">🪙 ตั้งเหรียญทุกคน =</span>
+              <input
+                id="bulk-reset-coins-val"
+                type="number"
+                min="0"
+                step="50"
+                value="1000"
+                class="w-20 font-display font-bold text-sm text-slate-900 tabular-nums outline-none border-b border-slate-300 focus:border-amber-500 text-center"
+              />
+            </div>
+            <button
+              onclick="teacherResetAllCoins(false)"
+              class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 text-xs font-bold cursor-pointer transition-all"
+            >
+              🔄 รีเซ็ตเหรียญทุกทีมตามค่านี้
+            </button>
+            <button
+              onclick="teacherResetAllCoins(true)"
+              class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold cursor-pointer transition-all"
+            >
+              ค่าเริ่มต้น (<span id="bulk-default-coins-lbl">1,000</span>)
+            </button>
+            <button
+              onclick="teacherResetAllScores()"
+              class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold cursor-pointer transition-all"
+            >
+              🧹 รีเซ็ตคะแนนทุกคนเป็น 0
+            </button>
+          </div>
+        </div>
+
+        <!-- Per-Team Editor List -->
+        <div id="teacher-edit-teams-list" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <span class="text-[11px] text-slate-500">บันทึกอัตโนมัติและซิงค์ขึ้นมือถือนักเรียนทันที</span>
+          <button
+            onclick="saveAndCloseTeacherEditModal()"
+            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-display font-bold text-sm flex items-center gap-1.5 cursor-pointer shadow-sm"
+          >
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>บันทึกและล็อกหน้าต่าง</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Force End Confirmation Modal -->
+
   <div id="force-end-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="animate-modal-in w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
@@ -1000,7 +1126,7 @@
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 flex items-center justify-center mx-auto shadow-lg">
             <i data-lucide="gavel" class="w-8 h-8"></i>
           </div>
-          <h1 class="font-display font-bold text-2xl">เข้าร่วม Bloom's Auction</h1>
+<h1 class="font-display font-bold text-2xl">เข้าร่วม BIDQUEST</h1>
           <p class="text-xs text-slate-400">กรอกรหัสห้องจากหน้าจอครูและตั้งชื่อทีมของคุณ</p>
         </div>
 
@@ -1481,12 +1607,15 @@ import {
     /* -----------------------------------------------------------------------
        1. CONSTANTS, HELPERS & TAXONOMY DATA
        ----------------------------------------------------------------------- */
+const TEACHER_PIN = '0000';
+
     const BLOOM_LEVELS = [
       { id: 'remember',   label: 'จำได้ (Remembering)',        pts: 100, color: '#10B981' },
       { id: 'understand', label: 'เข้าใจ (Understanding)',      pts: 200, color: '#0EA5E9' },
       { id: 'apply',      label: 'ประยุกต์ (Applying)',         pts: 300, color: '#6366F1' },
       { id: 'analyze',    label: 'วิเคราะห์ (Analyzing)',       pts: 400, color: '#F59E0B' },
-      { id: 'evaluate',   label: 'ประเมินค่า (Evaluating)',     pts: 500, color: '#F43F5E' }
+      { id: 'evaluate',   label: 'ประเมินค่า (Evaluating)',     pts: 500, color: '#F43F5E' },
+      { id: 'custom',     label: '✨ กำหนดคะแนนเอง (Custom)',   pts: 250, color: '#EC4899' }
     ];
 
     const BONUS_OPTIONS = [
@@ -1676,8 +1805,17 @@ import {
       saveUnitsToStorage();
     }
 
-    function getBloomById(id) {
+function getBloomById(id) {
       return BLOOM_LEVELS.find((b) => b.id === id) || BLOOM_LEVELS[0];
+    }
+
+    function getQuestionPoints(q) {
+      if (!q) return 100;
+      if (q.bloomId === 'custom') {
+        const val = parseInt(q.customPts);
+        return Number.isNaN(val) ? 250 : Math.max(0, val);
+      }
+      return getBloomById(q.bloomId).pts;
     }
 
     function getBonusById(id) {
@@ -2269,10 +2407,11 @@ function pushHostStateToFirebase(includeTeams = false) {
         return;
       }
       const finalTitle = title || code;
+const stdBlooms = BLOOM_LEVELS.filter((b) => b.id !== 'custom');
       const newQuestions = [];
       for (let p = 1; p <= paraCount; p++) {
-        newQuestions.push({ paragraph: p, bloomId: BLOOM_LEVELS[(p * 2 - 2) % BLOOM_LEVELS.length].id, bonusId: 'none' });
-        newQuestions.push({ paragraph: p, bloomId: BLOOM_LEVELS[(p * 2 - 1) % BLOOM_LEVELS.length].id, bonusId: 'none' });
+        newQuestions.push({ paragraph: p, bloomId: stdBlooms[(p * 2 - 2) % stdBlooms.length].id, bonusId: 'none' });
+        newQuestions.push({ paragraph: p, bloomId: stdBlooms[(p * 2 - 1) % stdBlooms.length].id, bonusId: 'none' });
       }
       const newUnit = {
         id: 'unit_' + Date.now(),
@@ -2324,8 +2463,9 @@ function pushHostStateToFirebase(includeTeams = false) {
       safeCreateIcons();
     }
 
-    function addQuestionInParagraph(pNum) {
-      const nextBloom = BLOOM_LEVELS[state.questions.length % BLOOM_LEVELS.length].id;
+function addQuestionInParagraph(pNum) {
+      const stdBlooms = BLOOM_LEVELS.filter((b) => b.id !== 'custom');
+      const nextBloom = stdBlooms[state.questions.length % stdBlooms.length].id;
       state.questions.push({ paragraph: pNum, bloomId: nextBloom, bonusId: 'none' });
       normalizeQuestionsParagraphs();
       renderSetupScreen();
@@ -2357,11 +2497,32 @@ function pushHostStateToFirebase(includeTeams = false) {
       safeCreateIcons();
     }
 
-    function updateQuestionBloom(idx, bloomId) {
-      if (state.questions[idx]) state.questions[idx].bloomId = bloomId;
+function updateQuestionBloom(idx, bloomId) {
+      if (state.questions[idx]) {
+        const prevPts = getQuestionPoints(state.questions[idx]);
+        state.questions[idx].bloomId = bloomId;
+        if (bloomId === 'custom' && (state.questions[idx].customPts === undefined || state.questions[idx].customPts === null)) {
+          state.questions[idx].customPts = prevPts;
+        }
+      }
       saveUnitsToStorage();
       renderSetupScreen();
       safeCreateIcons();
+    }
+
+    function updateQuestionCustomPts(idx, val, shouldRerender = false) {
+      if (state.questions[idx]) {
+        state.questions[idx].customPts = Math.max(0, parseInt(val) || 0);
+        saveUnitsToStorage();
+        const totalPts = state.questions.reduce((acc, q) => acc + getQuestionPoints(q), 0);
+        const totalEl = document.getElementById('setup-total-pts');
+        if (totalEl) totalEl.textContent = totalPts.toLocaleString();
+        updateCoinRecommendation();
+      }
+      if (shouldRerender) {
+        renderSetupScreen();
+        safeCreateIcons();
+      }
     }
 
     function updateQuestionBonus(idx, bonusId) {
@@ -2386,8 +2547,8 @@ function pushHostStateToFirebase(includeTeams = false) {
       showToast('รีเซ็ตชุดคำถามตัวอย่าง (3 พารากราฟ / 9 ข้อ) แล้ว', 'info');
     }
 
-    function computeRecommendedCoins(teamCount) {
-      const totalPts = state.questions.reduce((acc, q) => acc + getBloomById(q.bloomId).pts, 0);
+function computeRecommendedCoins(teamCount) {
+      const totalPts = state.questions.reduce((acc, q) => acc + getQuestionPoints(q), 0);
       const qCount = state.questions.length;
       const safeTeams = Math.max(2, teamCount);
       const raw = (totalPts / safeTeams) * 2.2 + qCount * 80;
@@ -2485,7 +2646,7 @@ function pushHostStateToFirebase(includeTeams = false) {
       if (base.startsWith('http')) {
         return `${base}?join=${encodeURIComponent(state.roomCode)}`;
       }
-      return `https://blooms-auction.app/?join=${encodeURIComponent(state.roomCode)}`;
+return `https://bidquest.app/?join=${encodeURIComponent(state.roomCode)}`;
     }
 
     function copyJoinLink() {
@@ -2619,8 +2780,8 @@ function pushHostStateToFirebase(includeTeams = false) {
                       ${statusDot}
                     </div>
                   </div>
-                  <div class="text-xs font-bold mt-1 ${isCurr ? 'text-amber-300' : 'text-indigo-600'} tabular-nums">${bloom.pts} คะแนน</div>
-                  <div class="text-[10px] truncate mt-0.5 ${isCurr ? 'text-indigo-100' : 'text-slate-400'}">${bloom.label}</div>
+<div class="text-xs font-bold mt-1 ${isCurr ? 'text-amber-300' : 'text-indigo-600'} tabular-nums">${getQuestionPoints(q).toLocaleString()} คะแนน</div>
+                  <div class="text-[10px] truncate mt-0.5 ${isCurr ? 'text-indigo-100' : 'text-slate-400'}">${q.bloomId === 'custom' ? 'กำหนดคะแนนเอง' : bloom.label}</div>
                 </button>
               `;
             }).join('')}
@@ -2839,8 +3000,8 @@ function pushHostStateToFirebase(includeTeams = false) {
         team.doubleActive = false;
       }
 
-      if (isCorrect) {
-        const earned = bloom.pts * mult;
+if (isCorrect) {
+        const earned = getQuestionPoints(q) * mult;
         team.score = (Number(team.score) || 0) + earned;
         state.questionResults.push({
           qIdx: state.currentQuestionIdx,
@@ -2984,13 +3145,204 @@ function pushHostStateToFirebase(includeTeams = false) {
           showToast(`🪙 แจกเหรียญเพิ่มให้ทีม "${team.name}" +${amount} เหรียญแล้ว!`, 'success');
         }
       }
-      playSuccessChime();
+  playSuccessChime();
       closeCoinDropModal();
       pushHostStateToFirebase(true);
       renderAll();
     }
 
+    /* Teacher PIN Protected Score & Coin Editor */
+    let teacherEditorUnlocked = false;
+
+    function openTeacherEditModal() {
+      teacherEditorUnlocked = false;
+      const modal = document.getElementById('teacher-edit-modal');
+      const gate = document.getElementById('teacher-pin-gate');
+      const body = document.getElementById('teacher-editor-body');
+      const pinInput = document.getElementById('teacher-pin-input');
+      const errEl = document.getElementById('teacher-pin-error');
+
+      if (gate) gate.classList.remove('hidden');
+      if (body) body.classList.add('hidden');
+      if (errEl) errEl.classList.add('hidden');
+      if (pinInput) pinInput.value = '';
+
+      modal.classList.remove('hidden');
+      setTimeout(() => pinInput && pinInput.focus(), 80);
+      safeCreateIcons();
+    }
+
+    function closeTeacherEditModal() {
+      teacherEditorUnlocked = false;
+      const modal = document.getElementById('teacher-edit-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function verifyTeacherPin() {
+      const pinInput = document.getElementById('teacher-pin-input');
+      const errEl = document.getElementById('teacher-pin-error');
+      const entered = (pinInput ? pinInput.value : '').trim();
+
+      if (entered !== TEACHER_PIN) {
+        if (errEl) errEl.classList.remove('hidden');
+        playWrongSound();
+        if (pinInput) {
+          pinInput.value = '';
+          pinInput.focus();
+        }
+        return;
+      }
+
+      teacherEditorUnlocked = true;
+      if (errEl) errEl.classList.add('hidden');
+      document.getElementById('teacher-pin-gate').classList.add('hidden');
+      document.getElementById('teacher-editor-body').classList.remove('hidden');
+
+      const bulkInput = document.getElementById('bulk-reset-coins-val');
+      const defaultLbl = document.getElementById('bulk-default-coins-lbl');
+      if (bulkInput) bulkInput.value = state.startingCoins;
+      if (defaultLbl) defaultLbl.textContent = state.startingCoins.toLocaleString();
+
+      playSuccessChime();
+      renderTeacherEditList();
+      safeCreateIcons();
+    }
+
+    function renderTeacherEditList() {
+      const list = document.getElementById('teacher-edit-teams-list');
+      if (!list) return;
+
+      if (state.teams.length === 0) {
+        list.innerHTML = `<div class="text-center py-8 text-sm text-slate-400">ยังไม่มีทีมในห้องนี้ครับ</div>`;
+        return;
+      }
+
+      list.innerHTML = state.teams.map((t, idx) => `
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl text-white font-display font-bold text-xs flex items-center justify-center shrink-0" style="background-color: ${t.color}">
+              ${escapeHtml(t.avatar)}
+            </div>
+            <div class="font-display font-bold text-sm text-slate-900 truncate">${escapeHtml(t.name)}</div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 shrink-0">
+            <!-- Edit Coins -->
+            <div class="flex items-center gap-1 bg-white border border-amber-200 rounded-xl px-2 py-1.5">
+              <span class="text-xs font-bold text-amber-600 shrink-0">🪙</span>
+              <button onclick="teacherAdjustTeamField(${idx}, 'wallet', -100)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-700 text-xs font-bold cursor-pointer">-100</button>
+              <input
+                type="number"
+                min="0"
+                step="50"
+                data-edit-idx="${idx}"
+                data-edit-field="wallet"
+                value="${t.wallet}"
+                onchange="teacherSetTeamField(${idx}, 'wallet', this.value)"
+                class="w-20 text-center font-display font-bold text-sm text-slate-900 tabular-nums outline-none border-b border-transparent focus:border-amber-500"
+              />
+              <button onclick="teacherAdjustTeamField(${idx}, 'wallet', 100)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-700 text-xs font-bold cursor-pointer">+100</button>
+              <button onclick="teacherResetSingleTeamCoins(${idx})" title="รีเซ็ตเหรียญทีมนี้เป็น ${state.startingCoins}" class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-200 text-amber-800 text-[11px] font-bold cursor-pointer">รีเซ็ต</button>
+            </div>
+
+            <!-- Edit Score -->
+            <div class="flex items-center gap-1 bg-white border border-indigo-200 rounded-xl px-2 py-1.5">
+              <span class="text-xs font-bold text-indigo-600 shrink-0">⭐</span>
+              <button onclick="teacherAdjustTeamField(${idx}, 'score', -100)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-700 text-xs font-bold cursor-pointer">-100</button>
+              <input
+                type="number"
+                min="0"
+                step="50"
+                data-edit-idx="${idx}"
+                data-edit-field="score"
+                value="${t.score}"
+                onchange="teacherSetTeamField(${idx}, 'score', this.value)"
+                class="w-20 text-center font-display font-bold text-sm text-slate-900 tabular-nums outline-none border-b border-transparent focus:border-indigo-500"
+              />
+              <button onclick="teacherAdjustTeamField(${idx}, 'score', 100)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-700 text-xs font-bold cursor-pointer">+100</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function teacherAdjustTeamField(idx, field, delta) {
+      if (!teacherEditorUnlocked || !state.teams[idx]) return;
+      const t = state.teams[idx];
+      t[field] = Math.max(0, (Number(t[field]) || 0) + delta);
+      if (field === 'wallet') t.currentBid = Math.min(Number(t.currentBid) || 0, t.wallet);
+      pushHostStateToFirebase(true);
+      renderTeacherEditList();
+      renderAll();
+    }
+
+    function teacherSetTeamField(idx, field, rawVal) {
+      if (!teacherEditorUnlocked || !state.teams[idx]) return;
+      const t = state.teams[idx];
+      t[field] = Math.max(0, parseInt(rawVal) || 0);
+      if (field === 'wallet') t.currentBid = Math.min(Number(t.currentBid) || 0, t.wallet);
+      pushHostStateToFirebase(true);
+      renderAll();
+    }
+
+    function teacherResetSingleTeamCoins(idx) {
+      if (!teacherEditorUnlocked || !state.teams[idx]) return;
+      const t = state.teams[idx];
+      t.wallet = state.startingCoins;
+      t.currentBid = Math.min(Number(t.currentBid) || 0, t.wallet);
+      pushHostStateToFirebase(true);
+      renderTeacherEditList();
+      renderAll();
+      showToast(`🔄 รีเซ็ตเหรียญทีม "${t.name}" เป็น ${state.startingCoins.toLocaleString()} เหรียญแล้ว`, 'success');
+    }
+
+    function teacherResetAllCoins(useDefault = false) {
+      if (!teacherEditorUnlocked) return;
+      const bulkInp = document.getElementById('bulk-reset-coins-val');
+      const targetVal = useDefault ? state.startingCoins : Math.max(0, parseInt(bulkInp ? bulkInp.value : state.startingCoins) || 0);
+      if (bulkInp) bulkInp.value = targetVal;
+      state.teams.forEach((t) => {
+        t.wallet = targetVal;
+        t.currentBid = Math.min(Number(t.currentBid) || 0, targetVal);
+      });
+      playSuccessChime();
+      pushHostStateToFirebase(true);
+      renderTeacherEditList();
+      renderAll();
+      showToast(`🔄 รีเซ็ตเหรียญทุกทีมเป็น ${targetVal.toLocaleString()} เหรียญเรียบร้อยแล้ว!`, 'success');
+    }
+
+    function teacherResetAllScores() {
+      if (!teacherEditorUnlocked) return;
+      if (!confirm('ยืนยันรีเซ็ตคะแนนสะสม (Victory Points) ของทุกทีมเป็น 0 ใช่ไหมครับ?')) return;
+      state.teams.forEach((t) => { t.score = 0; });
+      pushHostStateToFirebase(true);
+      renderTeacherEditList();
+      renderAll();
+      showToast('🧹 รีเซ็ตคะแนนทุกทีมเป็น 0 เรียบร้อยแล้ว', 'info');
+    }
+
+    function saveAndCloseTeacherEditModal() {
+      if (teacherEditorUnlocked) {
+        document.querySelectorAll('#teacher-edit-teams-list input[data-edit-idx]').forEach((inp) => {
+          const idx = parseInt(inp.getAttribute('data-edit-idx'));
+          const field = inp.getAttribute('data-edit-field');
+          if (state.teams[idx] && (field === 'wallet' || field === 'score')) {
+            state.teams[idx][field] = Math.max(0, parseInt(inp.value) || 0);
+            if (field === 'wallet') {
+              state.teams[idx].currentBid = Math.min(Number(state.teams[idx].currentBid) || 0, state.teams[idx].wallet);
+            }
+          }
+        });
+        pushHostStateToFirebase(true);
+        renderAll();
+        showToast('บันทึกคะแนนและเหรียญเรียบร้อย (ล็อกหน้าต่างแล้ว)', 'success');
+      }
+      closeTeacherEditModal();
+    }
+
     function openForceEndModal() {
+
       document.getElementById('force-end-modal').classList.remove('hidden');
       safeCreateIcons();
     }
@@ -3017,8 +3369,8 @@ function pushHostStateToFirebase(includeTeams = false) {
 
       barsEl.innerHTML = stats.map((s) => `
         <div class="space-y-1.5">
-          <div class="flex items-center justify-between text-xs font-bold">
-            <span class="text-slate-800">${s.label} (${s.pts} คะแนน)</span>
+<div class="flex items-center justify-between text-xs font-bold">
+            <span class="text-slate-800">${s.id === 'custom' ? s.label : `${s.label} (${s.pts} คะแนน)`}</span>
             <span class="tabular-nums text-slate-600">${s.total > 0 ? `ตอบถูก ${s.correct}/${s.total} ข้อ (${s.pct}%)` : 'ยังไม่มีข้อมูลในคาบนี้'}</span>
           </div>
           <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -3450,8 +3802,8 @@ function pushHostStateToFirebase(includeTeams = false) {
       const maxPara = Math.max(3, ...Array.from(paraMap.keys()));
       const paraOptions = Array.from({ length: maxPara + 1 }, (_, i) => i + 1);
 
-      list.innerHTML = Array.from(paraMap.entries()).sort((a, b) => a[0] - b[0]).map(([pNum, items]) => {
-        const pPts = items.reduce((s, item) => s + getBloomById(item.q.bloomId).pts, 0);
+list.innerHTML = Array.from(paraMap.entries()).sort((a, b) => a[0] - b[0]).map(([pNum, items]) => {
+        const pPts = items.reduce((s, item) => s + getQuestionPoints(item.q), 0);
         return `
           <div class="border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/60">
             <div class="bg-gradient-to-r from-indigo-50 via-slate-50 to-amber-50/60 border-b border-slate-200/80 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
@@ -3500,17 +3852,34 @@ function pushHostStateToFirebase(includeTeams = false) {
                       </button>
                     </div>
 
-                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <select
-                        onchange="updateQuestionBloom(${idx}, this.value)"
-                        class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 cursor-pointer"
-                      >
-                        ${BLOOM_LEVELS.map((b) => `<option value="${b.id}" ${b.id === q.bloomId ? 'selected' : ''}>${b.label} — ${b.pts} คะแนน</option>`).join('')}
-                      </select>
+<div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div class="space-y-1.5">
+                        <select
+                          onchange="updateQuestionBloom(${idx}, this.value)"
+                          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 cursor-pointer"
+                        >
+                          ${BLOOM_LEVELS.map((b) => `<option value="${b.id}" ${b.id === q.bloomId ? 'selected' : ''}>${b.id === 'custom' ? b.label : `${b.label} — ${b.pts} คะแนน`}</option>`).join('')}
+                        </select>
+                        ${q.bloomId === 'custom' ? `
+                          <div class="flex items-center gap-1.5 bg-pink-50 border border-pink-200 rounded-xl px-2.5 py-1.5">
+                            <span class="text-[11px] font-bold text-pink-700 shrink-0">คะแนนข้อนี้:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="50"
+                              value="${getQuestionPoints(q)}"
+                              oninput="updateQuestionCustomPts(${idx}, this.value, false)"
+                              onchange="updateQuestionCustomPts(${idx}, this.value, true)"
+                              class="w-full bg-white border border-pink-300 focus:border-pink-500 rounded-lg px-2 py-1 text-xs font-display font-bold text-slate-900 tabular-nums outline-none"
+                            />
+                            <span class="text-[11px] font-bold text-pink-700 shrink-0">คะแนน</span>
+                          </div>
+                        ` : ''}
+                      </div>
 
                       <select
                         onchange="updateQuestionBonus(${idx}, this.value)"
-                        class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-amber-500 cursor-pointer"
+                        class="self-start bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-amber-500 cursor-pointer"
                       >
                         ${BONUS_OPTIONS.map((bo) => `<option value="${bo.id}" ${bo.id === q.bonusId ? 'selected' : ''}>${bo.label}</option>`).join('')}
                       </select>
@@ -3541,7 +3910,7 @@ function pushHostStateToFirebase(includeTeams = false) {
         `;
       }).join('');
 
-      const totalPts = state.questions.reduce((acc, q) => acc + getBloomById(q.bloomId).pts, 0);
+const totalPts = state.questions.reduce((acc, q) => acc + getQuestionPoints(q), 0);
       document.getElementById('setup-q-count').textContent = state.questions.length;
       const pCountEl = document.getElementById('setup-p-count');
       if (pCountEl) pCountEl.textContent = paraMap.size;
@@ -3551,8 +3920,7 @@ function pushHostStateToFirebase(includeTeams = false) {
       const startSel = document.getElementById('setup-start-q-idx');
       if (startSel) {
         startSel.innerHTML = state.questions.map((q, idx) => {
-          const bloom = getBloomById(q.bloomId);
-          return `<option value="${idx}" ${idx === state.startQuestionIdx ? 'selected' : ''}>ข้อที่ ${idx + 1} (Paragraph ${q.paragraph || 1} • ${bloom.pts} คะแนน)</option>`;
+          return `<option value="${idx}" ${idx === state.startQuestionIdx ? 'selected' : ''}>ข้อที่ ${idx + 1} (Paragraph ${q.paragraph || 1} • ${getQuestionPoints(q).toLocaleString()} คะแนน)</option>`;
         }).join('');
       }
 
@@ -3634,8 +4002,8 @@ function pushHostStateToFirebase(includeTeams = false) {
       document.getElementById('play-room-code-badge').textContent = `ห้อง ${state.roomCode}`;
       const pBadge = document.getElementById('play-paragraph-badge');
       if (pBadge) pBadge.textContent = `📖 Paragraph ${q.paragraph || 1}`;
-      document.getElementById('play-q-badge').textContent = `คำถามข้อที่ ${state.currentQuestionIdx + 1} / ${state.questions.length}`;
-      document.getElementById('play-stakes-pts').textContent = bloom.pts.toLocaleString();
+document.getElementById('play-q-badge').textContent = `คำถามข้อที่ ${state.currentQuestionIdx + 1} / ${state.questions.length}`;
+      document.getElementById('play-stakes-pts').textContent = getQuestionPoints(q).toLocaleString();
 
       const bonusBadge = document.getElementById('play-bonus-badge');
       if (bonus.type !== 'none') {
@@ -3733,8 +4101,8 @@ function pushHostStateToFirebase(includeTeams = false) {
 
       const mpBadge = document.getElementById('modal-p-badge');
       if (mpBadge) mpBadge.textContent = `📖 Paragraph ${q.paragraph || 1}`;
-      document.getElementById('modal-q-badge').textContent = `ข้อที่ ${state.currentQuestionIdx + 1}`;
-      document.getElementById('modal-stakes-pts').textContent = bloom.pts.toLocaleString();
+document.getElementById('modal-q-badge').textContent = `ข้อที่ ${state.currentQuestionIdx + 1}`;
+      document.getElementById('modal-stakes-pts').textContent = getQuestionPoints(q).toLocaleString();
       document.getElementById('modal-bid-mode-pill').textContent = state.bidMode === 'open' ? '👁️ เปิดราคา (Open)' : '🙈 ปิดราคา (Blind)';
 
       const mBonus = document.getElementById('modal-bonus-pill');
@@ -3761,8 +4129,8 @@ function pushHostStateToFirebase(includeTeams = false) {
         if (winner) {
           document.getElementById('res-winner-name').textContent = winner.name;
           document.getElementById('res-winner-bid').textContent = winner.currentBid.toLocaleString();
-          document.getElementById('res-double-badge').classList.toggle('hidden', !winner.doubleActive);
-          const ptsGain = bloom.pts * (winner.doubleActive ? 2 : 1);
+document.getElementById('res-double-badge').classList.toggle('hidden', !winner.doubleActive);
+          const ptsGain = getQuestionPoints(q) * (winner.doubleActive ? 2 : 1);
           document.getElementById('res-correct-pts').textContent = ptsGain.toLocaleString();
 
           const ansBadge = document.getElementById('res-locked-answer');
@@ -3950,8 +4318,8 @@ function pushHostStateToFirebase(includeTeams = false) {
       document.getElementById('stu-total-score').textContent = `⭐ ${team.score.toLocaleString()}`;
       const stuCu = document.getElementById('stu-class-unit-mini');
       if (stuCu) stuCu.textContent = `${state.activeClassroom} • ${state.unitCode}`;
-      document.getElementById('stu-q-num-badge').textContent = `📖 P.${q.paragraph || 1} • ข้อที่ ${state.currentQuestionIdx + 1} / ${state.questions.length}`;
-      document.getElementById('stu-q-label').textContent = `${bloom.pts.toLocaleString()} คะแนน`;
+document.getElementById('stu-q-num-badge').textContent = `📖 P.${q.paragraph || 1} • ข้อที่ ${state.currentQuestionIdx + 1} / ${state.questions.length}`;
+      document.getElementById('stu-q-label').textContent = `${getQuestionPoints(q).toLocaleString()} คะแนน`;
 
       const timerMini = document.getElementById('stu-timer-mini');
       if (state.roundPhase === 'bidding') {
