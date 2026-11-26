@@ -496,9 +496,14 @@
             <span id="play-class-unit-badge" class="px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white text-xs font-bold">
               ม.5/2 • U5R1
             </span>
-            <span id="play-room-code-badge" class="px-2.5 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
-              ห้อง SKY-26
-            </span>
+<button
+              onclick="openPlayQrModal()"
+              title="คลิกเพื่อแสดง QR Code ให้นักเรียนสแกนเข้าทีมเดิม"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 border border-slate-200 hover:border-amber-300 text-xs font-bold text-slate-700 hover:text-amber-900 cursor-pointer transition-all"
+            >
+              <i data-lucide="qr-code" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span id="play-room-code-badge">ห้อง SKY-26</span>
+            </button>
             <span id="autosave-indicator" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
               <i data-lucide="cloud-check" class="w-3.5 h-3.5"></i>
               <span>บันทึกอัตโนมัติ</span>
@@ -1043,11 +1048,17 @@
             >
               ค่าเริ่มต้น (<span id="bulk-default-coins-lbl">1,000</span>)
             </button>
-            <button
+<button
               onclick="teacherResetAllScores()"
               class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold cursor-pointer transition-all"
             >
               🧹 รีเซ็ตคะแนนทุกคนเป็น 0
+            </button>
+            <button
+              onclick="teacherUnlockAllDevices()"
+              class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold cursor-pointer transition-all"
+            >
+              🔓 ปลดล็อกเครื่องทุกทีม
             </button>
           </div>
         </div>
@@ -1070,8 +1081,35 @@
     </div>
   </div>
 
-  <!-- Force End Confirmation Modal -->
+<!-- Play Screen QR Modal (แสดง QR Code ให้นักเรียนสแกนกลับเข้าทีมเดิมในคาบถัดไป) -->
+  <div id="play-qr-modal" class="hidden fixed inset-0 z-[75] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="animate-modal-in w-full max-w-sm bg-[#0F172A] text-white border border-slate-700 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-amber-300 uppercase tracking-wider">สแกนเพื่อกลับเข้าทีมเดิม</span>
+        <button onclick="closePlayQrModal()" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div>
+        <div id="play-qr-room-code" class="font-display font-bold text-4xl text-amber-400 tracking-wider tabular-nums">SKY-26</div>
+        <p class="text-xs text-slate-400 mt-1">หากเปลี่ยนมือถือ ให้สแกนแล้วกดเลือกชื่อทีมเดิมของตัวเองได้เลย</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 inline-block shadow-md mx-auto">
+        <img id="play-qr-img" src="" alt="QR Code กลับเข้าห้อง" class="w-52 h-52 mx-auto rounded-lg" />
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="copyJoinLink()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer">
+          คัดลอกลิงก์
+        </button>
+        <button onclick="closePlayQrModal()" class="py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold cursor-pointer">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+    </div>
+  </div>
 
+  <!-- Force End Confirmation Modal -->
+  
   <div id="force-end-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="animate-modal-in w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-5 text-center">
       <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
@@ -1158,18 +1196,60 @@
           </div>
         </div>
 
-        <button
-          onclick="submitStudentJoin()"
-          class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 active:scale-95 text-slate-950 font-display font-bold text-base shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
-        >
-          เข้าห้องประมูลเลย!
-        </button>
+<div class="space-y-2.5">
+          <button
+            onclick="submitStudentJoin()"
+            class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 active:scale-95 text-slate-950 font-display font-bold text-base shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+          >
+            เข้าห้องประมูลเลย!
+          </button>
+          <button
+            onclick="openStudentTeamPicker()"
+            class="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-indigo-300 font-display font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+          >
+            <i data-lucide="smartphone" class="w-4 h-4"></i>
+            <span>เปลี่ยนเครื่อง / เลือกทีมเดิมเข้าเล่นต่อ</span>
+          </button>
+        </div>
 
         <!-- Quick Team Switcher (แสดงเฉพาะตอนครูทดสอบในเครื่องเดียวกัน) -->
         <div id="stu-demo-switch-wrap" class="pt-3 border-t border-slate-800/80 text-center space-y-2">
           <p class="text-[11px] text-slate-400">หรือสลับควบคุมทีมที่มีอยู่ในห้อง (สำหรับทดสอบ):</p>
           <div id="stu-existing-teams-pills" class="flex flex-wrap justify-center gap-1.5"></div>
         </div>
+      </div>
+
+      <!-- Student Screen 1.5: Claim Existing Team Picker (เลือกทีมเดิมเมื่อเปลี่ยนเครื่อง) -->
+      <div id="student-picker-screen" class="hidden flex-1 p-5 flex flex-col justify-between gap-4">
+        <div class="space-y-4 flex-1 flex flex-col overflow-hidden">
+          <div class="flex items-center justify-between gap-2">
+            <button
+              onclick="closeStudentTeamPicker()"
+              class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+              title="กลับไปหน้ากรอกรหัสห้อง"
+            >
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            </button>
+            <div class="text-center flex-1">
+              <span id="picker-room-badge" class="text-[11px] font-bold text-amber-300 uppercase tracking-wider">ห้อง SKY-26</span>
+              <h2 class="font-display font-bold text-lg text-white leading-tight">เลือกทีมเดิมของคุณ</h2>
+            </div>
+            <div class="w-8"></div>
+          </div>
+
+          <p class="text-xs text-slate-400 text-center bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2">
+            แตะเลือกทีมของคุณเพื่อเข้าคุมเครื่องนี้ &bull; ทีมที่มีคนเลือกแล้วจะถูกล็อกไม่ให้คนอื่นกดซ้ำ
+          </p>
+
+          <div id="student-picker-list" class="space-y-2.5 overflow-y-auto flex-1 pr-0.5"></div>
+        </div>
+
+        <button
+          onclick="closeStudentTeamPicker()"
+          class="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer"
+        >
+          กลับหน้ากรอกรหัสห้อง
+        </button>
       </div>
 
       <!-- Student Screen 2: Live Controller -->
@@ -1502,27 +1582,37 @@ import {
         }
       },
 
-      async joinRoomAsStudent(roomCode, name, color, avatar) {
+ async joinRoomAsStudent(roomCode, name, color, avatar) {
         if (!this.ready || !this.uid) {
           return { ok: false, reason: 'กำลังเชื่อมต่อเซิร์ฟเวอร์ กรุณารอสักครู่ครับ' };
         }
         try {
-          const gsSnap = await get(ref(fbDb, `rooms/${roomCode}/gameState`));
-          if (!gsSnap.exists()) {
+          const roomSnap = await get(ref(fbDb, `rooms/${roomCode}`));
+          if (!roomSnap.exists() || !roomSnap.val().gameState) {
             return { ok: false, reason: `ไม่พบห้องรหัส "${roomCode}" กรุณาตรวจสอบรหัสห้องกับครูครับ` };
           }
-          const gs = gsSnap.val();
+          const roomData = roomSnap.val();
+          const gs = roomData.gameState;
+          const teams = roomData.teams || {};
 
-          // ถ้าเครื่องนี้เคยเข้าห้องนี้แล้ว (เช่น กลับมาเล่นต่อคาบหน้า หรือรีเฟรชจอ) ให้เชื่อมต่อกลับทีมเดิมได้เลย
-          const existingTeamSnap = await get(ref(fbDb, `rooms/${roomCode}/teams/${this.uid}`));
-          if (existingTeamSnap.exists()) {
-            return { ok: true, uid: this.uid, teamData: existingTeamSnap.val(), reconnected: true };
+          // 1. เช็กว่าเครื่องนี้กำลังคุมทีมไหนอยู่แล้ว หรือเคยเป็นเจ้าของทีมเดิมไหม
+          const claimedEntry = Object.entries(teams).find(([, t]) => t.claimedBy === this.uid);
+          if (claimedEntry) {
+            return { ok: true, teamId: claimedEntry[0], teamData: claimedEntry[1], reconnected: true };
+          }
+          if (teams[this.uid] && (!teams[this.uid].claimedBy || teams[this.uid].claimedBy === this.uid)) {
+            const claimRes = await this.claimExistingTeam(roomCode, this.uid);
+            if (claimRes.ok) {
+              return { ok: true, teamId: this.uid, teamData: teams[this.uid], reconnected: true };
+            }
           }
 
+          // 2. ถ้าห้องเริ่มเกมไปแล้ว (เช่น Resume คาบใหม่) ให้ส่งไปหน้าเลือกทีมเดิมแทน
           if (gs.screen !== 'lobby') {
-            return { ok: false, reason: 'ห้องนี้เริ่มเกมไปแล้ว หรือยังไม่เปิดรับทีมใหม่ครับ' };
+            return { ok: false, needPicker: true, reason: 'ห้องนี้เริ่มเกมไปแล้ว กรุณาเลือกทีมเดิมของคุณครับ' };
           }
 
+          // 3. สร้างทีมใหม่ในหน้า Lobby พร้อมล็อกเครื่องเป็นเจ้าของทีมทันที
           const teamData = {
             name: name.slice(0, 25),
             color,
@@ -1531,13 +1621,49 @@ import {
             wallet: Number(gs.startingCoins) || 1000,
             currentBid: 0,
             doubleActive: false,
-            doubleUsed: false
+            doubleUsed: false,
+            claimedBy: this.uid
           };
           await set(ref(fbDb, `rooms/${roomCode}/teams/${this.uid}`), teamData);
-          return { ok: true, uid: this.uid, teamData, reconnected: false };
+          return { ok: true, teamId: this.uid, teamData, reconnected: false };
         } catch (err) {
           console.error('joinRoomAsStudent failed:', err);
           return { ok: false, reason: `เข้าห้องไม่สำเร็จ (${err.code || 'ตรวจสอบ RTDB Rules'})` };
+        }
+      },
+
+      async fetchRoomForPicker(roomCode) {
+        if (!this.ready || !this.uid) {
+          return { ok: false, reason: 'กำลังเชื่อมต่อเซิร์ฟเวอร์ กรุณารอสักครู่ครับ' };
+        }
+        try {
+          const snap = await get(ref(fbDb, `rooms/${roomCode}`));
+          if (!snap.exists() || !snap.val().gameState) {
+            return { ok: false, reason: `ไม่พบห้องรหัส "${roomCode}" กรุณาตรวจสอบรหัสห้องกับครูครับ` };
+          }
+          return { ok: true, data: snap.val() };
+        } catch (err) {
+          console.error('fetchRoomForPicker failed:', err);
+          return { ok: false, reason: `ดึงข้อมูลห้องไม่สำเร็จ (${err.code || 'ตรวจสอบ RTDB Rules'})` };
+        }
+      },
+
+      async claimExistingTeam(roomCode, teamId) {
+        if (!this.ready || !this.uid) return { ok: false, reason: 'กำลังเชื่อมต่อเซิร์ฟเวอร์ครับ' };
+        try {
+          const claimRef = ref(fbDb, `rooms/${roomCode}/teams/${teamId}/claimedBy`);
+          const res = await runTransaction(claimRef, (curr) => {
+            // ถ้ามีเครื่องอื่นจับจองอยู่แล้ว ให้ยกเลิก transaction ทันที
+            if (curr && curr !== '' && curr !== this.uid) return;
+            return this.uid;
+          });
+          if (res.committed && res.snapshot.val() === this.uid) {
+            return { ok: true };
+          }
+          return { ok: false, reason: 'ทีมนี้มีเครื่องอื่นเลือกใช้งานไปแล้วครับ!' };
+        } catch (err) {
+          console.error('claimExistingTeam failed:', err);
+          return { ok: false, reason: `เลือกทีมไม่สำเร็จ (${err.code || 'กรุณาอัปเดต Firebase RTDB Rules'})` };
         }
       },
 
@@ -1773,10 +1899,11 @@ const TEACHER_PIN = '0000';
       teams: [],
       prevBidsSnapshot: {},
 
-      // Student Controller UI State
+// Student Controller UI State
       controlledTeamId: null,
       selectedJoinColor: TEAM_COLORS[0],
       studentJoinedCustom: false,
+      studentPickerMode: false,
       allInConfirmPending: false,
       allInConfirmTimer: null,
 
@@ -2041,8 +2168,9 @@ function getBloomById(id) {
           wallet: Math.max(0, Number(t.wallet) || 0),
           currentBid: Math.max(0, Number(t.currentBid) || 0),
           score: Math.max(0, Number(t.score) || 0),
-          doubleActive: !!t.doubleActive,
-          doubleUsed: !!t.doubleUsed
+doubleActive: !!t.doubleActive,
+          doubleUsed: !!t.doubleUsed,
+          claimedBy: t.claimedBy || ''
         };
         // ห้ามส่ง lockedAnswer: "" เพราะ RTDB Rules บังคับเป็น A|B|C|D เท่านั้น
         if (t.lockedAnswer && /^(A|B|C|D)$/.test(t.lockedAnswer)) {
@@ -2171,8 +2299,8 @@ function pushHostStateToFirebase(includeTeams = false) {
       state.eliminatedBidderIds = [];
       state.lockedAnswer = null;
       state.questionResults = Array.isArray(snap.questionResults) ? snap.questionResults : [];
-      state.teams = Array.isArray(snap.teams) ? snap.teams.map((t) => ({ ...t, currentBid: 0, doubleActive: false, lockedAnswer: '' })) : [];
-      state.prevBidsSnapshot = {};
+// เคลียร์ claimedBy ให้ว่างทุกทีมเมื่อเปิดเล่นต่อคาบใหม่ เพื่อให้นักเรียนสแกนเลือกทีมเดิมจากเครื่องใหม่ได้
+      state.teams = Array.isArray(snap.teams) ? snap.teams.map((t) => ({ ...t, currentBid: 0, doubleActive: false, lockedAnswer: '', claimedBy: '' })) : [];      state.prevBidsSnapshot = {};
       if (state.teams[0]) state.controlledTeamId = state.teams[0].id;
 
       // ซิงค์กลับขึ้น Firebase เพื่อให้เล่นต่อข้ามเครื่องได้ทันที
@@ -2262,9 +2390,10 @@ function pushHostStateToFirebase(includeTeams = false) {
           wallet: Math.max(0, Number(t.wallet) || 0),
           currentBid: Math.max(0, Number(t.currentBid) || 0),
           score: Math.max(0, Number(t.score) || 0),
-          doubleActive: !!t.doubleActive,
+doubleActive: !!t.doubleActive,
           doubleUsed: !!t.doubleUsed,
-          lockedAnswer: t.lockedAnswer || ''
+          lockedAnswer: t.lockedAnswer || '',
+          claimedBy: t.claimedBy || ''
         };
       });
 
@@ -2292,7 +2421,19 @@ function pushHostStateToFirebase(includeTeams = false) {
         }
       }
 
-      state.teams = incomingTeams;
+state.teams = incomingTeams;
+
+      // หากครูกดปลดล็อกเครื่องของทีมที่นักเรียนกำลังถืออยู่ ให้ดีดกลับหน้าเลือกทีมทันที
+      if (state.isLiveStudentClient && state.studentJoinedCustom && state.controlledTeamId && window.FB && window.FB.uid) {
+        const myTeam = incomingTeams.find((t) => t.id === state.controlledTeamId);
+        if (!myTeam || (myTeam.claimedBy !== window.FB.uid)) {
+          state.studentJoinedCustom = false;
+          state.controlledTeamId = null;
+          state.studentPickerMode = true;
+          showToast('ครูได้ปลดล็อกสิทธิ์เครื่องของทีมนี้แล้ว กรุณาเลือกทีมใหม่อีกครั้งครับ', 'warning');
+        }
+      }
+
       if (state.isLiveRoomHost) {
         autoSaveSession();
       }
@@ -3217,13 +3358,22 @@ if (isCorrect) {
         return;
       }
 
-      list.innerHTML = state.teams.map((t, idx) => `
+list.innerHTML = state.teams.map((t, idx) => `
         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
             <div class="w-9 h-9 rounded-xl text-white font-display font-bold text-xs flex items-center justify-center shrink-0" style="background-color: ${t.color}">
               ${escapeHtml(t.avatar)}
             </div>
-            <div class="font-display font-bold text-sm text-slate-900 truncate">${escapeHtml(t.name)}</div>
+            <div class="min-w-0">
+              <div class="font-display font-bold text-sm text-slate-900 truncate">${escapeHtml(t.name)}</div>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                ${t.claimedBy
+                  ? `<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">🔒 มีเครื่องคุมอยู่</span>
+                     <button onclick="teacherUnlockTeamDevice(${idx})" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer">ปลดล็อกเครื่อง</button>`
+                  : `<span class="text-[10px] font-semibold text-slate-400">⚪ ว่าง (รอเครื่องเข้าเลือก)</span>`
+                }
+              </div>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 shrink-0">
@@ -3312,7 +3462,7 @@ if (isCorrect) {
       showToast(`🔄 รีเซ็ตเหรียญทุกทีมเป็น ${targetVal.toLocaleString()} เหรียญเรียบร้อยแล้ว!`, 'success');
     }
 
-    function teacherResetAllScores() {
+function teacherResetAllScores() {
       if (!teacherEditorUnlocked) return;
       if (!confirm('ยืนยันรีเซ็ตคะแนนสะสม (Victory Points) ของทุกทีมเป็น 0 ใช่ไหมครับ?')) return;
       state.teams.forEach((t) => { t.score = 0; });
@@ -3320,6 +3470,41 @@ if (isCorrect) {
       renderTeacherEditList();
       renderAll();
       showToast('🧹 รีเซ็ตคะแนนทุกทีมเป็น 0 เรียบร้อยแล้ว', 'info');
+    }
+
+    function teacherUnlockTeamDevice(idx) {
+      if (!teacherEditorUnlocked || !state.teams[idx]) return;
+      const t = state.teams[idx];
+      t.claimedBy = '';
+      pushHostStateToFirebase(true);
+      renderTeacherEditList();
+      renderAll();
+      showToast(`🔓 ปลดล็อกเครื่องของทีม "${t.name}" แล้ว สามารถเลือกทีมใหม่จากเครื่องอื่นได้เลย`, 'success');
+    }
+
+    function teacherUnlockAllDevices() {
+      if (!teacherEditorUnlocked) return;
+      state.teams.forEach((t) => { t.claimedBy = ''; });
+      pushHostStateToFirebase(true);
+      renderTeacherEditList();
+      renderAll();
+      showToast('🔓 ปลดล็อกเครื่องทุกทีมเรียบร้อยแล้ว! นักเรียนสามารถเลือกทีมใหม่ได้ทุกคน', 'success');
+    }
+
+    function openPlayQrModal() {
+      const codeEl = document.getElementById('play-qr-room-code');
+      const imgEl = document.getElementById('play-qr-img');
+      if (codeEl) codeEl.textContent = state.roomCode;
+      if (imgEl) {
+        const joinUrl = getJoinUrl();
+        imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&data=${encodeURIComponent(joinUrl)}`;
+      }
+      document.getElementById('play-qr-modal').classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    function closePlayQrModal() {
+      document.getElementById('play-qr-modal').classList.add('hidden');
     }
 
     function saveAndCloseTeacherEditModal() {
@@ -3421,20 +3606,26 @@ if (isCorrect) {
 
       const avatar = makeAvatarFromName(teamName);
 
-      // กรณีเป็นเครื่องนักเรียนแยกต่างหาก เชื่อมเข้าห้องจริงผ่าน Firebase
+// กรณีเป็นเครื่องนักเรียนแยกต่างหาก เชื่อมเข้าห้องจริงผ่าน Firebase
       if (window.FB && window.FB.ready && !state.isLiveRoomHost) {
         showToast('กำลังเชื่อมต่อเข้าห้องเรียน...', 'info');
         const res = await window.FB.joinRoomAsStudent(roomCode, teamName, state.selectedJoinColor, avatar);
         if (!res.ok) {
+          if (res.needPicker) {
+            showToast(res.reason, 'info');
+            openStudentTeamPicker(roomCode);
+            return;
+          }
           showToast(res.reason, 'error');
           return;
         }
         state.roomCode = roomCode;
         state.isLiveStudentClient = true;
-        state.controlledTeamId = res.uid;
+        state.controlledTeamId = res.teamId || res.uid;
         state.studentJoinedCustom = true;
+        state.studentPickerMode = false;
         try {
-          localStorage.setItem('blooms_student_last_session', JSON.stringify({ roomCode, teamName }));
+          localStorage.setItem('blooms_student_last_session', JSON.stringify({ roomCode, teamName: res.teamData?.name || teamName }));
         } catch (e) {}
         window.FB.subscribeRoom(roomCode, handleRoomSnapshot);
         playSuccessChime();
@@ -3472,10 +3663,126 @@ if (isCorrect) {
       renderAll();
     }
 
-    function controlExistingTeam(teamId) {
+function controlExistingTeam(teamId) {
       state.controlledTeamId = teamId;
       state.studentJoinedCustom = true;
+      state.studentPickerMode = false;
       renderAll();
+    }
+
+    async function openStudentTeamPicker(forcedCode = '') {
+      const codeInput = document.getElementById('stu-join-code');
+      const roomCode = (forcedCode || (codeInput ? codeInput.value : '') || state.roomCode).trim().toUpperCase();
+      if (!roomCode) {
+        showToast('กรุณากรอกรหัสห้องเรียนก่อนครับ', 'warning');
+        return;
+      }
+
+      // กรณีทดสอบในเครื่องเดียวกับครู
+      if (state.isLiveRoomHost || !window.FB || !window.FB.ready) {
+        if (state.teams.length === 0) {
+          showToast('ยังไม่มีทีมในห้องนี้ครับ', 'warning');
+          return;
+        }
+        state.roomCode = roomCode;
+        state.studentPickerMode = true;
+        renderAll();
+        return;
+      }
+
+      showToast('กำลังโหลดรายชื่อทีมในห้อง...', 'info');
+      const res = await window.FB.fetchRoomForPicker(roomCode);
+      if (!res.ok) {
+        showToast(res.reason, 'error');
+        return;
+      }
+
+      state.roomCode = roomCode;
+      state.isLiveStudentClient = true;
+      state.studentPickerMode = true;
+      state.studentJoinedCustom = false;
+      handleRoomSnapshot(res.data);
+      window.FB.subscribeRoom(roomCode, handleRoomSnapshot);
+      renderAll();
+    }
+
+    function closeStudentTeamPicker() {
+      state.studentPickerMode = false;
+      renderAll();
+    }
+
+    async function studentClaimTeam(teamId) {
+      const target = getTeam(teamId);
+      if (!target) return;
+
+      // กรณีทดสอบบนเครื่องครู
+      if (!state.isLiveStudentClient || !window.FB || !window.FB.ready) {
+        controlExistingTeam(teamId);
+        return;
+      }
+
+      const res = await window.FB.claimExistingTeam(state.roomCode, teamId);
+      if (!res.ok) {
+        playWrongSound();
+        showToast(res.reason, 'error');
+        renderStudentTeamPicker();
+        return;
+      }
+
+      state.controlledTeamId = teamId;
+      state.studentJoinedCustom = true;
+      state.studentPickerMode = false;
+      try {
+        localStorage.setItem('blooms_student_last_session', JSON.stringify({ roomCode: state.roomCode, teamName: target.name }));
+      } catch (e) {}
+      playSuccessChime();
+      showToast(`เข้าควบคุมทีม "${target.name}" เรียบร้อยแล้ว!`, 'success');
+      renderAll();
+    }
+
+    function renderStudentTeamPicker() {
+      const badge = document.getElementById('picker-room-badge');
+      const list = document.getElementById('student-picker-list');
+      if (badge) badge.textContent = `ห้อง ${state.roomCode}`;
+      if (!list) return;
+
+      if (state.teams.length === 0) {
+        list.innerHTML = `<div class="text-center py-10 text-xs text-slate-400">ยังไม่มีทีมในห้องนี้ กรุณากดย้อนกลับเพื่อสร้างทีมใหม่ครับ</div>`;
+        return;
+      }
+
+      const myUid = window.FB ? window.FB.uid : null;
+      list.innerHTML = state.teams.map((t) => {
+        const isTakenByOther = !!(t.claimedBy && myUid && t.claimedBy !== myUid);
+        return `
+          <button
+            onclick="${isTakenByOther ? '' : `studentClaimTeam('${escapeHtml(t.id)}')`}"
+            ${isTakenByOther ? 'disabled' : ''}
+            class="w-full text-left rounded-2xl p-3.5 border flex items-center justify-between gap-3 transition-all ${
+              isTakenByOther
+                ? 'bg-slate-900/50 border-slate-800 opacity-50 cursor-not-allowed'
+                : 'bg-slate-800/90 hover:bg-slate-700/90 active:scale-[0.98] border-slate-700 hover:border-amber-400 cursor-pointer'
+            }"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-xl text-white font-display font-bold text-sm flex items-center justify-center shrink-0" style="background-color: ${t.color}">
+                ${escapeHtml(t.avatar)}
+              </div>
+              <div class="min-w-0">
+                <div class="font-display font-bold text-base text-white truncate">${escapeHtml(t.name)}</div>
+                <div class="text-xs font-semibold text-slate-400 tabular-nums">
+                  ⭐ ${t.score.toLocaleString()} คะแนน &bull; 🪙 ${t.wallet.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            ${
+              isTakenByOther
+                ? `<span class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-rose-400 text-[11px] font-bold shrink-0">🔒 ใช้งานอยู่</span>`
+                : `<span class="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-display font-bold text-xs shrink-0">เลือกทีมนี้</span>`
+            }
+          </button>
+        `;
+      }).join('');
     }
 
     async function studentAddBid(delta) {
@@ -4288,19 +4595,30 @@ document.getElementById('res-double-badge').classList.toggle('hidden', !winner.d
       }
     }
 
-    function renderStudentView() {
+function renderStudentView() {
       const joinScreen = document.getElementById('student-join-screen');
+      const pickerScreen = document.getElementById('student-picker-screen');
       const ctrlScreen = document.getElementById('student-ctrl-screen');
       const team = getTeam(state.controlledTeamId);
 
+      if (state.studentPickerMode && (!state.studentJoinedCustom || !team)) {
+        joinScreen.classList.add('hidden');
+        pickerScreen.classList.remove('hidden');
+        ctrlScreen.classList.add('hidden');
+        renderStudentTeamPicker();
+        return;
+      }
+
       if (!state.studentJoinedCustom || !team) {
         joinScreen.classList.remove('hidden');
+        pickerScreen.classList.add('hidden');
         ctrlScreen.classList.add('hidden');
         renderStudentJoinScreen();
         return;
       }
 
       joinScreen.classList.add('hidden');
+      pickerScreen.classList.add('hidden');
       ctrlScreen.classList.remove('hidden');
 
       const q = getCurrentQuestion();
@@ -4463,9 +4781,45 @@ document.getElementById('stu-q-num-badge').textContent = `📖 P.${q.paragraph |
             if (nameInput && !nameInput.value) nameInput.value = lastStu.teamName;
           }
         } catch (e) {}
-        const nav = document.getElementById('prototype-switcher-nav');
+const nav = document.getElementById('prototype-switcher-nav');
         if (nav) nav.classList.add('hidden');
         switchView('student');
+
+        // รอ Firebase พร้อม แล้วเช็กอัตโนมัติ: ถ้าเครื่องเดิมเข้าได้เลย หรือถ้าเกมเริ่มไปแล้วให้เปิดหน้าเลือกทีมเดิมทันที
+        let tries = 0;
+        const waitFb = setInterval(async () => {
+          tries++;
+          if (window.FB && window.FB.ready) {
+            clearInterval(waitFb);
+            const res = await window.FB.fetchRoomForPicker(state.roomCode);
+            if (!res.ok || !res.data || !res.data.gameState) return;
+            const teams = res.data.teams || {};
+            const myUid = window.FB.uid;
+
+            // 1. เครื่องเดิมที่เคยผูกทีมไว้อยู่แล้ว -> ดึงกลับเข้าทีมอัตโนมัติทันที
+            const owned = Object.entries(teams).find(([tid, t]) => t.claimedBy === myUid || (tid === myUid && !t.claimedBy));
+            if (owned) {
+              const claimRes = await window.FB.claimExistingTeam(state.roomCode, owned[0]);
+              if (claimRes.ok) {
+                state.isLiveStudentClient = true;
+                state.controlledTeamId = owned[0];
+                state.studentJoinedCustom = true;
+                state.studentPickerMode = false;
+                handleRoomSnapshot(res.data);
+                window.FB.subscribeRoom(state.roomCode, handleRoomSnapshot);
+                showToast(`กลับเข้าทีม "${owned[1].name}" อัตโนมัติแล้ว!`, 'success');
+                return;
+              }
+            }
+
+            // 2. เครื่องใหม่ที่สแกนเข้ามาตอนครู Resume/เริ่มเกมแล้ว -> เปิดหน้าเลือกทีมเดิมให้เลย
+            if (res.data.gameState.screen !== 'lobby' && Object.keys(teams).length > 0) {
+              openStudentTeamPicker(state.roomCode);
+            }
+          } else if (tries >= 25) {
+            clearInterval(waitFb);
+          }
+        }, 200);
         return;
       }
 
